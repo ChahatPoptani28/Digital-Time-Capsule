@@ -4,6 +4,7 @@ import { Hourglass, Heart, Lock, Sparkles, Calendar, Gift, ArrowRight } from "lu
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import Navbar from "@/components/Navbar";
+import AnimatedHourglass from "@/components/AnimatedHourglass";
 
 const Index = () => {
   const features = [
@@ -76,7 +77,7 @@ const Index = () => {
               transition={{ delay: 0.2 }}
               className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-8"
             >
-              <Hourglass className="w-4 h-4 text-primary" />
+              <AnimatedHourglass size={16} className="text-primary" />
               <span className="text-sm font-medium text-primary">Preserve your precious moments</span>
             </motion.div>
 
@@ -224,7 +225,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center">
-              <Hourglass className="w-4 h-4 text-primary-foreground" />
+              <AnimatedHourglass size={16} className="text-primary-foreground" />
             </div>
             <span className="font-heading font-semibold gradient-text">Time Capsule</span>
           </div>

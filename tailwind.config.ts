@@ -125,6 +125,19 @@ export default {
           "0%": { transform: "translateY(0) rotate(0deg)", opacity: "1" },
           "100%": { transform: "translateY(-100px) rotate(720deg)", opacity: "0" },
         },
+        "sand-fall": {
+          "0%, 100%": { transform: "rotate(0deg)" },
+          "50%": { transform: "rotate(180deg)" },
+        },
+        "sand-particle": {
+          "0%": { transform: "translateY(-4px)", opacity: "0" },
+          "20%": { opacity: "1" },
+          "100%": { transform: "translateY(4px)", opacity: "0" },
+        },
+        "hourglass-glow": {
+          "0%, 100%": { filter: "drop-shadow(0 0 2px hsl(var(--gold)))" },
+          "50%": { filter: "drop-shadow(0 0 8px hsl(var(--gold)))" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -136,6 +149,9 @@ export default {
         "bounce-soft": "bounce-soft 2s ease-in-out infinite",
         "spin-slow": "spin-slow 8s linear infinite",
         confetti: "confetti 1s ease-out forwards",
+        "sand-fall": "sand-fall 4s ease-in-out infinite",
+        "sand-particle": "sand-particle 1.5s ease-in-out infinite",
+        "hourglass-glow": "hourglass-glow 2s ease-in-out infinite",
       },
     },
   },
