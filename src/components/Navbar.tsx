@@ -38,7 +38,7 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
               transition={{ duration: 0.5 }}
               className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center shadow-glow"
             >
-              <AnimatedHourglass size={20} className="text-primary-foreground" />
+              <AnimatedHourglass size={24} className="text-primary-foreground" />
             </motion.div>
             <span className="font-heading font-semibold text-lg gradient-text hidden sm:block">
               Time Capsule
