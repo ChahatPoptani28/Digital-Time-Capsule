@@ -41,8 +41,9 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center justify-center overflow-hidden">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/30" />
+        {/* Background gradient - matching How It Works style */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-secondary/50 to-accent/40" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-accent/30 via-transparent to-gold/30" />
 
         {/* Floating elements */}
         {floatingElements.map((el, index) => (
