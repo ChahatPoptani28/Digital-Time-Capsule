@@ -145,7 +145,7 @@
     border: 2px solid transparent;
     border-radius: 9999px;
     background-image: linear-gradient(180deg, hsl(210 30% 94%), hsl(210 25% 88%)),
-                      linear-gradient(135deg, hsl(var(--locked) / 0.5), hsl(var(--primary) / 0.3), hsl(var(--locked) / 0.5));
+                      linear-gradient(135deg, hsl(var(--locked) / 0.8), hsl(var(--primary) / 0.6), hsl(var(--locked) / 0.8));
     background-origin: padding-box, border-box;
     background-clip: padding-box, border-box;
     background-size: 100% 100%, 200% 200%;
@@ -155,7 +155,7 @@
 
   .capsule-locked:hover {
     animation: card-border-shimmer 2s linear infinite;
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 30px rgba(100, 130, 180, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 30px rgba(100, 130, 180, 0.4);
   }
 
   .capsule-unlocked {
@@ -163,7 +163,7 @@
     border: 2px solid transparent;
     border-radius: 9999px;
     background-image: linear-gradient(180deg, hsl(262 40% 96%), hsl(262 35% 90%)),
-                      linear-gradient(135deg, hsl(var(--primary) / 0.5), hsl(var(--gold) / 0.5), hsl(var(--accent-mint) / 0.5), hsl(var(--primary) / 0.5));
+                      linear-gradient(135deg, hsl(var(--primary) / 0.8), hsl(var(--gold) / 0.7), hsl(var(--accent-mint) / 0.8), hsl(var(--primary) / 0.8));
     background-origin: padding-box, border-box;
     background-clip: padding-box, border-box;
     background-size: 100% 100%, 200% 200%;
@@ -173,7 +173,7 @@
 
   .capsule-unlocked:hover {
     animation: card-border-shimmer 2s linear infinite;
-    box-shadow: 0 0 30px hsl(262 70% 55% / 0.3), 0 8px 36px rgba(100, 80, 180, 0.2);
+    box-shadow: 0 0 30px hsl(262 70% 55% / 0.4), 0 8px 36px rgba(100, 80, 180, 0.3);
   }
 }
 
