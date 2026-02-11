@@ -170,11 +170,11 @@ const Index = () => {
               >
                 <Card variant="glass" className="h-full hover:shadow-glow transition-all duration-300 group">
                   <CardContent className="p-8 text-center">
-                    {/* Step number */}
+                    {/* Step number
                     <div className="text-6xl font-heading font-bold text-primary/10 mb-4">
-                      {index + 1}
-                    </div>
-
+                      {""}
+                    </div> */}
+                    
                     {/* Icon gift  */}
                     <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${feature.color} flex items-center justify-center mb-6 shadow-lg group-hover:scale-110 transition-transform duration-300`}>
                       <feature.icon className="w-8 h-8 text-primary-foreground" />

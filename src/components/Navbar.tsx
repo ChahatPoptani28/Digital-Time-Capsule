@@ -14,12 +14,7 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = isLoggedIn
-    ? [
-        { path: "/dashboard", label: "Dashboard", icon: Hourglass },
-        { path: "/create", label: "Create Capsule", icon: Plus },
-      ]
-    : [];
+  const navLinks = [];
 
   const isActive = (path: string) => location.pathname === path;
 
