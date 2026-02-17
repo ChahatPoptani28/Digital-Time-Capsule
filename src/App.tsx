@@ -25,9 +25,23 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/create" element={<CreateCapsule />} />
-          <Route path="/capsule/:id" element={<ViewCapsule />} />
+          <Route path="/dashboard"  element={<ProtectedRoute><Dashboard /></ProtectedRoute> }
+/>
+          <Route path="/create" element={
+    <ProtectedRoute>
+      <CreateCapsule />
+    </ProtectedRoute>
+  }
+/>
+
+<Route
+  path="/capsule/:id"
+  element={<ProtectedRoute> 
+      <ViewCapsule />
+    </ProtectedRoute>
+  }
+/>
+
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}/>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
