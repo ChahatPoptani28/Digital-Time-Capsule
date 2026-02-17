@@ -4,38 +4,59 @@ import { motion } from "framer-motion";
 import { Mail, Lock, Clock, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { loginUser } from "@/api/auth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(""); 
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const res = await loginUser({ email, password });
+      console.log("Login response:", res.data);
+      const token = res.data.token;
+      if (!token) {
+  throw new Error("Token not received from backend");
+}
+
+      
+      localStorage.setItem("token", token);
+
       toast({
-        title: "Welcome back! 💜",
-        description: "Your memories are waiting for you.",
+        title: "Login successful 🎉",
+        description: "Welcome back!",
       });
+
       navigate("/dashboard");
-    }, 1000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Login failed");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-secondary/20" />
 
-      {/* Decorative elements */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 0.5 }}
@@ -53,7 +74,6 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <motion.div
             whileHover={{ rotate: 360 }}
@@ -69,16 +89,21 @@ const Login = () => {
 
         <Card variant="glass" className="border-0 shadow-card">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-2xl font-heading">Welcome back</CardTitle>
+            <CardTitle className="text-2xl font-heading">
+              Welcome back
+            </CardTitle>
             <CardDescription className="text-base">
               Your memories are safe with us 💜
             </CardDescription>
           </CardHeader>
+
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-4">
               {/* Email */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Email</label>
+                <label className="text-sm font-medium text-foreground">
+                  Email
+                </label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -94,7 +119,9 @@ const Login = () => {
 
               {/* Password */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Password</label>
+                <label className="text-sm font-medium text-foreground">
+                  Password
+                </label>
                 <div className="relative">
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
@@ -110,19 +137,21 @@ const Login = () => {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
 
-              {/* Forgot password link */}
-              <div className="text-right">
-                <button type="button" className="text-sm text-primary hover:underline">
-                  Forgot password?
-                </button>
-              </div>
+              {error && (
+                <p className="text-sm text-destructive text-center">
+                  {error}
+                </p>
+              )}
 
-              {/* Submit */}
               <Button
                 type="submit"
                 variant="hero"
@@ -130,36 +159,23 @@ const Login = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <motion.div
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                    className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full"
-                  />
-                ) : (
-                  "Sign In"
-                )}
+                {isLoading ? "Signing in..." : "Sign In"}
               </Button>
             </form>
 
-            {/* Register link */}
             <div className="mt-6 text-center">
               <p className="text-muted-foreground">
                 Don't have an account?{" "}
-                <Link to="/register" className="text-primary font-semibold hover:underline">
+                <Link
+                  to="/register"
+                  className="text-primary font-semibold hover:underline"
+                >
                   Create one
                 </Link>
               </p>
             </div>
           </CardContent>
         </Card>
-
-        {/* Back to home */}
-        <div className="mt-6 text-center">
-          <Link to="/" className="text-sm text-muted-foreground hover:text-primary transition-colors">
-            ← Back to home
-          </Link>
-        </div>
       </motion.div>
     </div>
   );

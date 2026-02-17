@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import CreateCapsule from "./pages/CreateCapsule";
 import ViewCapsule from "./pages/ViewCapsule";
 import NotFound from "./pages/NotFound";
+import ProtectedRoute from "@/components/ProtectedRoute";
+
 
 const queryClient = new QueryClient();
 
@@ -26,12 +28,17 @@ const App = () => (
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create" element={<CreateCapsule />} />
           <Route path="/capsule/:id" element={<ViewCapsule />} />
+          <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>}/>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
+
+  
+
+
 );
 
 export default App;

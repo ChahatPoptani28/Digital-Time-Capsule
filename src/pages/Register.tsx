@@ -3,6 +3,8 @@ import { Mail, Lock, User, Clock, Eye, EyeOff, Check } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { registerUser, loginUser } from "@/api/auth";
+
 import {
   Card,
   CardContent,
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import { registerUser } from "@/api/auth";
+
 
 const Register = () => {
   const [name, setName] = useState("");
@@ -32,25 +34,28 @@ const Register = () => {
   };
 
   const handleRegister = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      await registerUser({ name, email, password });
+  try {
 
-      toast({
-        title: "Registration successful 🎉",
-        description: "You can now login to your account.",
-      });
+    await registerUser({ name, email, password });
 
-      navigate("/login");
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    const loginRes = await loginUser({ email, password });
+
+    const token = loginRes.data.token;
+    localStorage.setItem("token", token);
+
+    navigate("/dashboard");
+
+  } catch (err: any) {
+    setError(err.response?.data?.message || "Registration failed");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
