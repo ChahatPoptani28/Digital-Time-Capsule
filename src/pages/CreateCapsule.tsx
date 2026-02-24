@@ -12,7 +12,8 @@ import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-
+import API from "@/api/axios";
+import { AxiosError } from "axios";
 const CreateCapsule = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
@@ -35,19 +36,49 @@ const CreateCapsule = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
+
+  if (!unlockDate) return;
+
+  try {
     setIsLoading(true);
 
-    // Simulate capsule creation
-    setTimeout(() => {
-      setIsLoading(false);
-      toast({
-        title: "Capsule sealed! ✨",
-        description: `Your memory will unlock on ${format(unlockDate!, "PPP")}`,
-      });
-      navigate("/dashboard");
-    }, 1500);
-  };
+    const formData = new FormData();
+
+    formData.append("title", title);
+    formData.append("message", message);
+    formData.append("unlockDate", unlockDate.toISOString());
+
+    // Append multiple images (max 5)
+    images.forEach((file) => {
+      formData.append("media", file);
+    });
+
+    await API.post("/capsules", formData);
+
+    toast({
+      title: "Capsule sealed! ✨",
+      description: `Your memory will unlock on ${format(unlockDate, "PPP")}`,
+    });
+
+    navigate("/dashboard");
+
+  } catch (error) {
+  console.error("Create capsule error:", error);
+
+  let errorMessage = "Something went wrong";
+
+  if (error instanceof AxiosError) {
+    errorMessage = error.response?.data?.message || errorMessage;
+  }
+
+  toast({
+    title: "Failed to create capsule",
+    description: errorMessage,
+    variant: "destructive",
+  });
+}
+};
 
   const isStep1Complete = title.length > 0;
   const isStep2Complete = message.length > 0;
