@@ -1,67 +1,74 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Plus, Clock, Gift, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import CapsuleCard, { Capsule } from "@/components/CapsuleCard";
+import API from "@/api/axios";
+import { AxiosError } from "axios";
 
 // Mock data for demonstration
-const mockCapsules: Capsule[] = [
-  {
-    id: "1",
-    title: "Message to Future Me",
-    unlockDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    isUnlocked: false,
-    hasMessage: true,
-    hasImage: true,
-    createdAt: new Date(),
-  },
-  {
-    id: "2",
-    title: "Our Anniversary Memories 💕",
-    unlockDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000),
-    isUnlocked: false,
-    hasMessage: true,
-    hasImage: true,
-    hasVideo: true,
-    createdAt: new Date(),
-  },
-  {
-    id: "3",
-    title: "Birthday Surprise for Sarah",
-    unlockDate: new Date(Date.now() - 24 * 60 * 60 * 1000),
-    isUnlocked: true,
-    hasMessage: true,
-    hasImage: true,
-    createdAt: new Date(),
-  },
-  {
-    id: "4",
-    title: "Graduation Day Reflections",
-    unlockDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
-    isUnlocked: false,
-    hasMessage: true,
-    createdAt: new Date(),
-  },
-];
 
 const Dashboard = () => {
   const navigate = useNavigate();
-
-  const [capsules] = useState<Capsule[]>(mockCapsules);
+  const [capsules, setCapsules] = useState<Capsule[]>([]);
+const [loading, setLoading] = useState(true);
+const [error, setError] = useState<string | null>(null);
   const userName = "Alex";
 
   const unlockedCount = capsules.filter((c) => c.isUnlocked).length;
   const lockedCount = capsules.filter((c) => !c.isUnlocked).length;
+
+  useEffect(() => {
+  const fetchCapsules = async () => {
+    try {
+      setLoading(true);
+
+      const response = await API.get("/capsules");
+      const data = response.data.data;
+
+      const formattedCapsules: Capsule[] = data.map((c: any) => ({
+        id: c._id,
+        title: c.title,
+        unlockDate: new Date(c.unlockDate),
+        isUnlocked: c.status === "unlocked",
+        hasMessage: true,
+        hasImage: false,
+        hasVideo: false,
+        createdAt: new Date(c.unlockDate),
+      }));
+
+      setCapsules(formattedCapsules);
+
+    } catch (err) {
+      console.error(err);
+      setError("Failed to fetch capsules");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  fetchCapsules();
+}, []);
 
   // 🔐 Logout Function
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+  if (loading) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-muted-foreground text-lg">
+        Loading capsules...
+      </p>
+    </div>
+  );
+}
 
   return (
+    
     <div className="min-h-screen pb-24">
       {/* Passing logout to Navbar */}
       <Navbar
@@ -134,25 +141,24 @@ const Dashboard = () => {
         </motion.div>
 
         {/* Capsules Grid */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.2 }}
-        >
-          <h2 className="text-xl font-heading font-semibold mb-4">
-            Your Capsules
-          </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {capsules.map((capsule, index) => (
-              <CapsuleCard
-                key={capsule.id}
-                capsule={capsule}
-                index={index}
-              />
-            ))}
-          </div>
-        </motion.div>
-
+        {capsules.length === 0 ? (
+  <div className="text-center py-20 text-muted-foreground">
+    <p>No capsules yet.</p>
+    <p className="text-sm mt-2">
+      Create your first memory capsule ✨
+    </p>
+  </div>
+) : (
+  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    {capsules.map((capsule, index) => (
+      <CapsuleCard
+        key={capsule.id}
+        capsule={capsule}
+        index={index}
+      />
+    ))}
+  </div>
+)}
         {/* Floating Button */}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
