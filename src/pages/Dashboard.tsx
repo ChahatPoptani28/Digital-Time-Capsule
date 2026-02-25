@@ -64,10 +64,17 @@ const [error, setError] = useState<string | null>(null);
         Loading capsules...
       </p>
     </div>
+  ); if(error) {
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <p className="text-destructive text-lg">{error}</p>
+    </div>
   );
+}
 }
 
   return (
+   
     
     <div className="min-h-screen pb-24">
       {/* Passing logout to Navbar */}
