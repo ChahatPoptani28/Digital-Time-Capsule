@@ -8,13 +8,18 @@ import AnimatedHourglass from "./AnimatedHourglass";
 interface NavbarProps {
   isLoggedIn?: boolean;
   userName?: string;
+  handleLogout?: () => void;
 }
 
-const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
+const Navbar = ({
+  isLoggedIn = false,
+  userName = "User",
+  handleLogout,
+}: NavbarProps) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const navLinks = [];
+  const navLinks: any[] = [];
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -40,22 +45,7 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
             </span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center gap-2">
-            {navLinks.map((link) => (
-              <Link key={link.path} to={link.path}>
-                <Button
-                  variant={isActive(link.path) ? "soft" : "ghost"}
-                  className="gap-2"
-                >
-                  <link.icon className="w-4 h-4" />
-                  {link.label}
-                </Button>
-              </Link>
-            ))}
-          </div>
-
-          {/* Auth Buttons */}
+          {/* Desktop Auth Section */}
           <div className="hidden md:flex items-center gap-3">
             {isLoggedIn ? (
               <>
@@ -63,12 +53,16 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
                   <User className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium">{userName}</span>
                 </div>
-                <Link to="/">
-                  <Button variant="ghost" size="sm" className="gap-2">
-                    <LogOut className="w-4 h-4" />
-                    Logout
-                  </Button>
-                </Link>
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-2"
+                  onClick={() => handleLogout?.()}
+                >
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
               </>
             ) : (
               <>
@@ -91,7 +85,11 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
             className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
-            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            {mobileMenuOpen ? (
+              <X className="w-5 h-5" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
           </Button>
         </div>
 
@@ -100,48 +98,41 @@ const Navbar = ({ isLoggedIn = false, userName = "User" }: NavbarProps) => {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
             className="md:hidden py-4 border-t border-border/50"
           >
             <div className="flex flex-col gap-2">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.path}
-                  to={link.path}
-                  onClick={() => setMobileMenuOpen(false)}
+              {isLoggedIn ? (
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start gap-2"
+                  onClick={() => {
+                    setMobileMenuOpen(false);
+                    handleLogout?.();
+                  }}
                 >
-                  <Button
-                    variant={isActive(link.path) ? "soft" : "ghost"}
-                    className="w-full justify-start gap-2"
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              ) : (
+                <>
+                  <Link
+                    to="/login"
+                    onClick={() => setMobileMenuOpen(false)}
                   >
-                    <link.icon className="w-4 h-4" />
-                    {link.label}
-                  </Button>
-                </Link>
-              ))}
-              <div className="border-t border-border/50 pt-2 mt-2">
-                {isLoggedIn ? (
-                  <Link to="/" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="ghost" className="w-full justify-start gap-2">
-                      <LogOut className="w-4 h-4" />
-                      Logout
+                    <Button variant="ghost" className="w-full justify-start">
+                      Login
                     </Button>
                   </Link>
-                ) : (
-                  <>
-                    <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ghost" className="w-full justify-start">
-                        Login
-                      </Button>
-                    </Link>
-                    <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="hero" className="w-full mt-2">
-                        Get Started
-                      </Button>
-                    </Link>
-                  </>
-                )}
-              </div>
+                  <Link
+                    to="/register"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Button variant="hero" className="w-full mt-2">
+                      Get Started
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </motion.div>
         )}
