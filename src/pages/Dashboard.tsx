@@ -1,27 +1,28 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Plus, Clock, Gift, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import CapsuleCard, { Capsule } from "@/components/CapsuleCard";
 import API from "@/api/axios";
-import { AxiosError } from "axios";
-import { AnimatePresence } from "framer-motion";
-
-// Mock data for demonstration
 
 const Dashboard = () => {
   const navigate = useNavigate();
+
   const [capsules, setCapsules] = useState<Capsule[]>([]);
-const [loading, setLoading] = useState(true);
-const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const userName = "Alex";
 
   const unlockedCount = capsules.filter((c) => c.isUnlocked).length;
   const lockedCount = capsules.filter((c) => !c.isUnlocked).length;
 
-  useEffect(() => {
+  /* =========================
+     FETCH CAPSULES (Reusable)
+  ========================= */
+
   const fetchCapsules = async () => {
     try {
       setLoading(true);
@@ -32,6 +33,7 @@ const [error, setError] = useState<string | null>(null);
       const formattedCapsules: Capsule[] = data.map((c: any) => ({
         id: c._id,
         title: c.title,
+        message: c.message,
         unlockDate: new Date(c.unlockDate),
         isUnlocked: c.status === "unlocked",
         hasMessage: true,
@@ -41,7 +43,7 @@ const [error, setError] = useState<string | null>(null);
       }));
 
       setCapsules(formattedCapsules);
-
+      setError(null);
     } catch (err) {
       console.error(err);
       setError("Failed to fetch capsules");
@@ -50,35 +52,47 @@ const [error, setError] = useState<string | null>(null);
     }
   };
 
-  fetchCapsules();
-}, []);
+  useEffect(() => {
+    fetchCapsules();
+  }, []);
 
-  // 🔐 Logout Function
+  /* =========================
+     LOGOUT
+  ========================= */
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/login");
   };
+
+  /* =========================
+     LOADING / ERROR STATES
+  ========================= */
+
   if (loading) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-muted-foreground text-lg">
-        Loading capsules...
-      </p>
-    </div>
-  ); if(error) {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <p className="text-destructive text-lg">{error}</p>
-    </div>
-  );
-}
-}
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-muted-foreground text-lg">
+          Loading capsules...
+        </p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-destructive text-lg">{error}</p>
+      </div>
+    );
+  }
+
+  /* =========================
+     UI
+  ========================= */
 
   return (
-   
-    
     <div className="min-h-screen pb-24">
-      {/* Passing logout to Navbar */}
       <Navbar
         isLoggedIn
         userName={userName}
@@ -150,31 +164,28 @@ const [error, setError] = useState<string | null>(null);
 
         {/* Capsules Grid */}
         {capsules.length === 0 ? (
-  <div className="text-center py-20 text-muted-foreground">
-    <p>No capsules yet.</p>
-    <p className="text-sm mt-2">
-      Create your first memory capsule ✨
-    </p>
-  </div>
-) : (
-  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    <AnimatePresence>
-  {capsules.map((capsule, index) => (
-    <CapsuleCard
-      key={capsule.id}
-      capsule={capsule}
-      index={index}
-      onDelete={() =>
-        setCapsules((prev) =>
-          prev.filter((c) => c.id !== capsule.id)
-        )
-      }
-    />
-  ))}
-</AnimatePresence>
-  </div>
-)}
-        {/* Floating Button */}
+          <div className="text-center py-20 text-muted-foreground">
+            <p>No capsules yet.</p>
+            <p className="text-sm mt-2">
+              Create your first memory capsule ✨
+            </p>
+          </div>
+        ) : (
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {capsules.map((capsule, index) => (
+                <CapsuleCard
+                  key={capsule.id}
+                  capsule={capsule}
+                  index={index}
+                  onDelete={fetchCapsules}   // 👈 refresh after edit/delete
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Floating Create Button */}
         <motion.div
           initial={{ scale: 0, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}

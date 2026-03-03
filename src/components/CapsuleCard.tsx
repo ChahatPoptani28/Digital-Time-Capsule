@@ -1,19 +1,21 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {Lock,
+import {
+  Lock,
   Unlock,
   Calendar,
   Image,
   Video,
   FileText,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CountdownTimer from "./CountdownTimer";
 import API from "@/api/axios";
 import { useToast } from "@/hooks/use-toast";
-
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,11 +26,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useState } from "react";
 
 export interface Capsule {
   id: string;
   title: string;
+  message?: string;
   unlockDate: Date;
   isUnlocked: boolean;
   hasImage?: boolean;
@@ -44,169 +46,309 @@ interface CapsuleCardProps {
 }
 
 const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
-  const { id, title, unlockDate, isUnlocked, hasImage, hasVideo, hasMessage } =
-    capsule;
+  const {
+    id,
+    title,
+    message,
+    unlockDate,
+    isUnlocked,
+    hasImage,
+    hasVideo,
+    hasMessage,
+  } = capsule;
 
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editTitle, setEditTitle] = useState(title);
+  const [editMessage, setEditMessage] = useState(message || "");
+  const [editDate, setEditDate] = useState("");
+  const [editMedia, setEditMedia] = useState<File[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
- const handleDelete = async () => {
-  try {
-    setIsDeleting(true);
+  /* ================= FORMAT DATE FOR datetime-local ================= */
 
-    await API.delete(`/capsules/${id}`);
+  const formatDateTimeLocal = (date: Date | string) => {
+    const d = new Date(date);
 
-    toast({
-      title: "Capsule deleted",
-      description: "Memory removed successfully.",
-    });
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    const hours = String(d.getHours()).padStart(2, "0");
+    const minutes = String(d.getMinutes()).padStart(2, "0");
 
-    onDelete?.();
-  } catch (err: any) {
-    toast({
-      title: "Delete failed",
-      description:
-        err.response?.data?.message || "Something went wrong",
-      variant: "destructive",
-    });
-  } finally {
-    setIsDeleting(false);
-  }
-};
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
+  /* ================= DELETE ================= */
+
+  const handleDelete = async () => {
+    try {
+      setIsDeleting(true);
+
+      await API.delete(`/capsules/${id}`);
+
+      toast({
+        title: "Capsule deleted",
+        description: "Memory removed successfully.",
+      });
+
+      onDelete?.();
+    } catch (err: any) {
+      toast({
+        title: "Delete failed",
+        description:
+          err.response?.data?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  /* ================= UPDATE ================= */
+
+  const handleUpdate = async () => {
+    try {
+      setIsUpdating(true);
+
+      const formData = new FormData();
+      formData.append("title", editTitle);
+      formData.append("message", editMessage);
+      formData.append("unlockDate", editDate);
+
+      if (editMedia.length > 0) {
+        editMedia.forEach((file) => {
+          formData.append("media", file);
+        });
+      }
+
+      await API.put(`/capsules/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      toast({
+        title: "Capsule updated",
+        description: "Memory updated successfully.",
+      });
+
+      setEditOpen(false);
+      onDelete?.();
+    } catch (err: any) {
+      toast({
+        title: "Update failed",
+        description:
+          err.response?.data?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUpdating(false);
+    }
+  };
 
   return (
-    <motion.div
-  layout
-  initial={{ opacity: 0, y: 20 }}
-  animate={{ opacity: 1, y: 0 }}
-  exit={{ opacity: 0, scale: 0.9 }}
-  transition={{ duration: 0.3 }}
->   
-      <Card
-        variant={isUnlocked ? "unlocked" : "locked"}
-        className="cursor-pointer overflow-hidden"
-        onClick={() => navigate(`/capsule/${id}`)}
+    <>
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ duration: 0.3 }}
       >
-        <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
-            <CardTitle className="line-clamp-1 flex-1">
-              {title}
-            </CardTitle>
+        <Card
+          variant={isUnlocked ? "unlocked" : "locked"}
+          className="cursor-pointer overflow-hidden"
+          onClick={() => navigate(`/capsule/${id}`)}
+        >
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between gap-2">
+              <CardTitle className="line-clamp-1 flex-1">
+                {title}
+              </CardTitle>
 
-            <div className="flex items-center gap-3">
-              {/* DELETE BUTTON */}
-              <AlertDialog>
-               <AlertDialogTrigger asChild>
-  <button
-    disabled={!isUnlocked}
-    onClick={(e) => e.stopPropagation()}
-    className={`transition ${
-      isUnlocked
-        ? "text-destructive hover:opacity-80"
-        : "text-muted-foreground cursor-not-allowed opacity-50"
-    }`}
-  >
-    <Trash2 className="w-5 h-5" />
-  </button>
-</AlertDialogTrigger>
-<AlertDialogContent onClick={(e) => e.stopPropagation()}>
-  <AlertDialogTitle className="text-destructive">
-    ⚠ Delete Capsule?
-  </AlertDialogTitle>
+              <div className="flex items-center gap-3">
+                {/* EDIT BUTTON */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
 
-  <AlertDialogDescription className="pt-2">
-    This memory will be permanently removed.
-    <br />
-    <span className="font-medium text-destructive">
-      This action cannot be undone.
-    </span>
-  </AlertDialogDescription>
+                    setEditTitle(title);
+                    setEditMessage(message || "");
+                    setEditDate(formatDateTimeLocal(unlockDate));
 
-  <AlertDialogFooter>
-    <AlertDialogCancel>
-      Keep my memory
-    </AlertDialogCancel>
+                    setEditOpen(true);
+                  }}
+                  className="text-primary hover:opacity-80 transition"
+                >
+                  <Pencil className="w-5 h-5" />
+                </button>
 
-    <AlertDialogAction
-  disabled={isDeleting}
-  onClick={(e) => {
-    e.stopPropagation();
-    handleDelete();
-  }}
-  className="bg-destructive text-white hover:bg-destructive/90"
->
-  {isDeleting ? "Deleting..." : "Yes, Delete"}
-</AlertDialogAction>
-  </AlertDialogFooter>
-</AlertDialogContent>
-              </AlertDialog>
+                {/* DELETE BUTTON */}
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      disabled={!isUnlocked}
+                      onClick={(e) => e.stopPropagation()}
+                      className={`transition ${
+                        isUnlocked
+                          ? "text-destructive hover:opacity-80"
+                          : "text-muted-foreground cursor-not-allowed opacity-50"
+                      }`}
+                    >
+                      <Trash2 className="w-5 h-5" />
+                    </button>
+                  </AlertDialogTrigger>
 
-              <Badge
-                variant={isUnlocked ? "default" : "secondary"}
-                className={`${
-                  isUnlocked
-                    ? "bg-unlocked/20 text-unlocked border-unlocked/30"
-                    : "bg-locked/20 text-locked border-locked/30"
-                }`}
-              >
-                {isUnlocked ? (
-                  <Unlock className="w-3 h-3 mr-1" />
-                ) : (
-                  <Lock className="w-3 h-3 mr-1" />
-                )}
-                {isUnlocked ? "Unlocked" : "Locked"}
-              </Badge>
+                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                    <AlertDialogTitle className="text-destructive">
+                      ⚠ Delete Capsule?
+                    </AlertDialogTitle>
+
+                    <AlertDialogDescription className="pt-2">
+                      This memory will be permanently removed.
+                      <br />
+                      <span className="font-medium text-destructive">
+                        This action cannot be undone.
+                      </span>
+                    </AlertDialogDescription>
+
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>
+                        Keep my memory
+                      </AlertDialogCancel>
+
+                      <AlertDialogAction
+                        disabled={isDeleting}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete();
+                        }}
+                        className="bg-destructive text-white hover:bg-destructive/90"
+                      >
+                        {isDeleting ? "Deleting..." : "Yes, Delete"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+
+                <Badge
+                  variant={isUnlocked ? "default" : "secondary"}
+                  className={`${
+                    isUnlocked
+                      ? "bg-unlocked/20 text-unlocked border-unlocked/30"
+                      : "bg-locked/20 text-locked border-locked/30"
+                  }`}
+                >
+                  {isUnlocked ? (
+                    <Unlock className="w-3 h-3 mr-1" />
+                  ) : (
+                    <Lock className="w-3 h-3 mr-1" />
+                  )}
+                  {isUnlocked ? "Unlocked" : "Locked"}
+                </Badge>
+              </div>
+            </div>
+          </CardHeader>
+
+          <CardContent className="space-y-4">
+            <div className="flex gap-2 flex-wrap">
+              {hasMessage && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                  <FileText className="w-3 h-3" />
+                  <span>Message</span>
+                </div>
+              )}
+              {hasImage && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                  <Image className="w-3 h-3" />
+                  <span>Photo</span>
+                </div>
+              )}
+              {hasVideo && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                  <Video className="w-3 h-3" />
+                  <span>Video</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-border/50">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Calendar className="w-4 h-4" />
+                <span>
+                  {new Date(unlockDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+              {!isUnlocked && (
+                <CountdownTimer unlockDate={unlockDate} compact />
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
+      {/* EDIT MODAL */}
+      {editOpen && (
+        <div
+          onClick={() => setEditOpen(false)}
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white dark:bg-zinc-900 w-full max-w-lg p-8 rounded-3xl shadow-2xl"
+          >
+            <h2 className="text-2xl font-bold mb-6 text-center">
+              Edit Capsule ✏️
+            </h2>
+
+            <div className="space-y-4">
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                className="w-full border rounded-xl px-4 py-3"
+              />
+
+              <textarea
+                value={editMessage}
+                onChange={(e) => setEditMessage(e.target.value)}
+                className="w-full border rounded-xl px-4 py-3 h-28"
+              />
+
+              <input
+                type="datetime-local"
+                value={editDate}
+                onChange={(e) => setEditDate(e.target.value)}
+                className="w-full border rounded-xl px-4 py-3"
+              />
+
+              <div className="flex justify-end gap-4 pt-4">
+                <button
+                  onClick={() => setEditOpen(false)}
+                  className="px-5 py-2 rounded-xl border"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  disabled={isUpdating}
+                  onClick={handleUpdate}
+                  className="px-5 py-2 rounded-xl bg-primary text-white disabled:opacity-50"
+                >
+                  {isUpdating ? "Saving..." : "Save Changes"}
+                </button>
+              </div>
             </div>
           </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="flex gap-2 flex-wrap">
-            {hasMessage && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-                <FileText className="w-3 h-3" />
-                <span>Message</span>
-              </div>
-            )}
-            {hasImage && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-                <Image className="w-3 h-3" />
-                <span>Photo</span>
-              </div>
-            )}
-            {hasVideo && (
-              <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
-                <Video className="w-3 h-3" />
-                <span>Video</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Calendar className="w-4 h-4" />
-              <span>
-                {new Date(unlockDate).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </span>
-            </div>
-            {!isUnlocked && (
-              <CountdownTimer unlockDate={unlockDate} compact />
-            )}
-          </div>
-
-          <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-            <span className="text-xs text-primary font-medium">
-              {isUnlocked ? "Open capsule →" : "View details →"}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
+        </div>
+      )}
+    </>
   );
 };
 
