@@ -101,26 +101,35 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                     <Trash2 className="w-5 h-5" />
                   </button>
                 </AlertDialogTrigger>
+<AlertDialogContent onClick={(e) => e.stopPropagation()}>
+  <AlertDialogTitle className="text-destructive">
+    ⚠ Delete Capsule?
+  </AlertDialogTitle>
 
-                <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                  <AlertDialogTitle>Delete Capsule?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This action cannot be undone.
-                  </AlertDialogDescription>
+  <AlertDialogDescription className="pt-2">
+    This memory will be permanently removed.
+    <br />
+    <span className="font-medium text-destructive">
+      This action cannot be undone.
+    </span>
+  </AlertDialogDescription>
 
-                  <AlertDialogFooter>
-                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleDelete();
-                      }}
-                      className="bg-destructive text-white hover:bg-destructive/90"
-                    >
-                      Delete
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
+  <AlertDialogFooter>
+    <AlertDialogCancel>
+      Keep my memory
+    </AlertDialogCancel>
+
+    <AlertDialogAction
+      onClick={(e) => {
+        e.stopPropagation();
+        handleDelete();
+      }}
+      className="bg-destructive text-white hover:bg-destructive/90"
+    >
+      Yes, Delete
+    </AlertDialogAction>
+  </AlertDialogFooter>
+</AlertDialogContent>
               </AlertDialog>
 
               <Badge
