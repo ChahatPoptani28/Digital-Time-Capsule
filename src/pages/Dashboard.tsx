@@ -158,12 +158,17 @@ const [error, setError] = useState<string | null>(null);
 ) : (
   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
     {capsules.map((capsule, index) => (
-      <CapsuleCard
-        key={capsule.id}
-        capsule={capsule}
-        index={index}
-      />
-    ))}
+  <CapsuleCard
+    key={capsule.id}
+    capsule={capsule}
+    index={index}
+    onDelete={() =>
+      setCapsules((prev) =>
+        prev.filter((c) => c.id !== capsule.id)
+      )
+    }
+  />
+))}
   </div>
 )}
         {/* Floating Button */}

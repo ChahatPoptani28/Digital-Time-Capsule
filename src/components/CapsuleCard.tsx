@@ -1,9 +1,19 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Lock, Unlock, Calendar, Image, Video, FileText } from "lucide-react";
+import {
+  Lock,
+  Unlock,
+  Calendar,
+  Image,
+  Video,
+  FileText,
+  Trash2,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CountdownTimer from "./CountdownTimer";
+import API from "@/api/axios";
+import { useToast } from "@/hooks/use-toast";
 
 export interface Capsule {
   id: string;
@@ -19,10 +29,43 @@ export interface Capsule {
 interface CapsuleCardProps {
   capsule: Capsule;
   index?: number;
+  onDelete?: () => void;
 }
 
-const CapsuleCard = ({ capsule, index = 0 }: CapsuleCardProps) => {
-  const { id, title, unlockDate, isUnlocked, hasImage, hasVideo, hasMessage } = capsule;
+const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
+  const { id, title, unlockDate, isUnlocked, hasImage, hasVideo, hasMessage } =
+    capsule;
+
+  const { toast } = useToast();
+
+  const handleDelete = async (e: React.MouseEvent) => {
+    e.preventDefault(); // stop link navigation
+    e.stopPropagation();
+
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this capsule?"
+    );
+
+    if (!confirmDelete) return;
+
+    try {
+      await API.delete(`/capsules/${id}`);
+
+      toast({
+        title: "Capsule deleted",
+        description: "Memory removed successfully.",
+      });
+
+      onDelete?.(); // refresh dashboard
+    } catch (err: any) {
+      toast({
+        title: "Delete failed",
+        description:
+          err.response?.data?.message || "Something went wrong",
+        variant: "destructive",
+      });
+    }
+  };
 
   return (
     <motion.div
@@ -33,10 +76,24 @@ const CapsuleCard = ({ capsule, index = 0 }: CapsuleCardProps) => {
       className="group"
     >
       <Link to={`/capsule/${id}`}>
-        <Card variant={isUnlocked ? "unlocked" : "locked"} className="cursor-pointer overflow-hidden">
+        <Card
+          variant={isUnlocked ? "unlocked" : "locked"}
+          className="cursor-pointer overflow-hidden"
+        >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-2">
-              <CardTitle className="line-clamp-1 flex-1">{title}</CardTitle>
+              <CardTitle className="line-clamp-1 flex-1">
+                {title}
+              </CardTitle>
+
+              {/* Delete Icon */}
+              <button
+                onClick={handleDelete}
+                className="text-destructive hover:opacity-80 transition"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+
               <Badge
                 variant={isUnlocked ? "default" : "secondary"}
                 className={`shrink-0 ${
@@ -54,9 +111,10 @@ const CapsuleCard = ({ capsule, index = 0 }: CapsuleCardProps) => {
               </Badge>
             </div>
           </CardHeader>
+
           <CardContent className="space-y-4">
             {/* Content indicators */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {hasMessage && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
                   <FileText className="w-3 h-3" />
@@ -77,7 +135,7 @@ const CapsuleCard = ({ capsule, index = 0 }: CapsuleCardProps) => {
               )}
             </div>
 
-            {/* Unlock date / Countdown */}
+            {/* Date + Countdown */}
             <div className="flex items-center justify-between pt-2 border-t border-border/50">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Calendar className="w-4 h-4" />
@@ -89,10 +147,11 @@ const CapsuleCard = ({ capsule, index = 0 }: CapsuleCardProps) => {
                   })}
                 </span>
               </div>
-              {!isUnlocked && <CountdownTimer unlockDate={unlockDate} compact />}
+              {!isUnlocked && (
+                <CountdownTimer unlockDate={unlockDate} compact />
+              )}
             </div>
 
-            {/* Hover effect indicator */}
             <div className="flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <span className="text-xs text-primary font-medium">
                 {isUnlocked ? "Open capsule →" : "View details →"}

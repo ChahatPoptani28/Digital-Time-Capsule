@@ -9,6 +9,9 @@ import Confetti from "@/components/Confetti";
 import Navbar from "@/components/Navbar";
 import { format } from "date-fns";
 import API from "@/api/axios";
+import { Trash2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 const ViewCapsule = () => {
   const { id } = useParams();
@@ -18,6 +21,8 @@ const ViewCapsule = () => {
   const [error, setError] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const navigate = useNavigate();
+const { toast } = useToast();
 
   // 🔹 Fetch capsule from backend
   useEffect(() => {
@@ -70,6 +75,33 @@ const ViewCapsule = () => {
 
   const { title, message, unlockDate, isLocked, createdAt, media } = capsule;
 
+  const handleDelete = async () => {
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete this capsule? This action cannot be undone."
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    await API.delete(`/capsules/${id}`);
+
+    toast({
+      title: "Capsule deleted",
+      description: "Your memory has been removed successfully.",
+    });
+
+    navigate("/dashboard");
+
+  } catch (err: any) {
+    toast({
+      title: "Delete failed",
+      description:
+        err.response?.data?.message || "Something went wrong",
+      variant: "destructive",
+    });
+  }
+};
+
   return (
     <div className="min-h-screen pb-12">
       <Navbar isLoggedIn userName="Alex" />
@@ -105,6 +137,17 @@ const ViewCapsule = () => {
                   <h1 className="text-3xl font-heading font-bold mb-2">
                     {title}
                   </h1>
+                  <div className="flex justify-center mt-4">
+  <Button
+    variant="destructive"
+    size="sm"
+    className="gap-2"
+    onClick={handleDelete}
+  >
+    <Trash2 className="w-4 h-4" />
+    Delete Capsule
+  </Button>
+</div>
 
                   <p className="text-muted-foreground">
                     Created on {format(new Date(createdAt), "MMMM d, yyyy")}
@@ -151,6 +194,8 @@ const ViewCapsule = () => {
                 )}
               </motion.div>
             )}
+
+            
           </AnimatePresence>
         ) : (
           /* 🔒 LOCKED VIEW */
