@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Lock,
+import {Lock,
   Unlock,
   Calendar,
   Image,
@@ -25,6 +24,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { useState } from "react";
 
 export interface Capsule {
   id: string;
@@ -49,34 +49,40 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleDelete = async () => {
-    try {
-      await API.delete(`/capsules/${id}`);
+ const handleDelete = async () => {
+  try {
+    setIsDeleting(true);
 
-      toast({
-        title: "Capsule deleted",
-        description: "Memory removed successfully.",
-      });
+    await API.delete(`/capsules/${id}`);
 
-      onDelete?.();
-    } catch (err: any) {
-      toast({
-        title: "Delete failed",
-        description:
-          err.response?.data?.message || "Something went wrong",
-        variant: "destructive",
-      });
-    }
-  };
+    toast({
+      title: "Capsule deleted",
+      description: "Memory removed successfully.",
+    });
+
+    onDelete?.();
+  } catch (err: any) {
+    toast({
+      title: "Delete failed",
+      description:
+        err.response?.data?.message || "Something went wrong",
+      variant: "destructive",
+    });
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.1 }}
-      whileHover={{ y: -5, scale: 1.02 }}
-    >
+  layout
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  exit={{ opacity: 0, scale: 0.9 }}
+  transition={{ duration: 0.3 }}
+>   
       <Card
         variant={isUnlocked ? "unlocked" : "locked"}
         className="cursor-pointer overflow-hidden"
@@ -91,16 +97,19 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
             <div className="flex items-center gap-3">
               {/* DELETE BUTTON */}
               <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    className="text-destructive hover:opacity-80 transition"
-                  >
-                    <Trash2 className="w-5 h-5" />
-                  </button>
-                </AlertDialogTrigger>
+               <AlertDialogTrigger asChild>
+  <button
+    disabled={!isUnlocked}
+    onClick={(e) => e.stopPropagation()}
+    className={`transition ${
+      isUnlocked
+        ? "text-destructive hover:opacity-80"
+        : "text-muted-foreground cursor-not-allowed opacity-50"
+    }`}
+  >
+    <Trash2 className="w-5 h-5" />
+  </button>
+</AlertDialogTrigger>
 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
   <AlertDialogTitle className="text-destructive">
     ⚠ Delete Capsule?
@@ -120,14 +129,15 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
     </AlertDialogCancel>
 
     <AlertDialogAction
-      onClick={(e) => {
-        e.stopPropagation();
-        handleDelete();
-      }}
-      className="bg-destructive text-white hover:bg-destructive/90"
-    >
-      Yes, Delete
-    </AlertDialogAction>
+  disabled={isDeleting}
+  onClick={(e) => {
+    e.stopPropagation();
+    handleDelete();
+  }}
+  className="bg-destructive text-white hover:bg-destructive/90"
+>
+  {isDeleting ? "Deleting..." : "Yes, Delete"}
+</AlertDialogAction>
   </AlertDialogFooter>
 </AlertDialogContent>
               </AlertDialog>
