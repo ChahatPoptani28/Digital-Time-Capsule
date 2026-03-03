@@ -36,6 +36,7 @@ const Dashboard = () => {
         message: c.message,
         unlockDate: new Date(c.unlockDate),
         isUnlocked: c.status === "unlocked",
+        media: c.media || [],
         hasMessage: true,
         hasImage: false,
         hasVideo: false,

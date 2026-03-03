@@ -33,6 +33,10 @@ export interface Capsule {
   message?: string;
   unlockDate: Date;
   isUnlocked: boolean;
+  media?: {
+    type: string;
+    url: string;
+  }[];
   hasImage?: boolean;
   hasVideo?: boolean;
   hasMessage?: boolean;
@@ -327,7 +331,96 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                 onChange={(e) => setEditDate(e.target.value)}
                 className="w-full border rounded-xl px-4 py-3"
               />
+              {/* ================= MEDIA SECTION ================= */}
 
+<div className="space-y-4">
+
+  <h3 className="text-sm font-semibold">
+    Current Media
+  </h3>
+
+  {capsule.media && capsule.media.length > 0 ? (
+    <div className="grid grid-cols-3 gap-3">
+      {capsule.media.map((item, index) => (
+        <div
+          key={index}
+          className="relative rounded-xl overflow-hidden border"
+        >
+          {item.type === "image" && (
+            <img
+              src={item.url}
+              alt="media"
+              className="w-full h-24 object-cover"
+            />
+          )}
+
+          {item.type === "video" && (
+            <video
+              src={item.url}
+              className="w-full h-24 object-cover"
+            />
+          )}
+
+          {item.type === "audio" && (
+            <div className="flex items-center justify-center h-24 bg-muted text-sm">
+              🎵 Audio File
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  ) : (
+    <p className="text-xs text-muted-foreground">
+      No media attached
+    </p>
+  )}
+
+  <div className="border-t pt-4 space-y-3">
+    <h3 className="text-sm font-semibold">
+      Replace Media
+    </h3>
+
+    <input
+      type="file"
+      multiple
+      onChange={(e) =>
+        setEditMedia(
+          e.target.files ? Array.from(e.target.files) : []
+        )
+      }
+      className="w-full border rounded-xl px-4 py-3"
+    />
+
+    {editMedia.length > 0 && (
+      <div className="grid grid-cols-3 gap-3">
+        {editMedia.map((file, index) => (
+          <div
+            key={index}
+            className="relative border rounded-xl p-2 text-xs"
+          >
+            <div className="truncate">{file.name}</div>
+
+            <button
+              onClick={() =>
+                setEditMedia((prev) =>
+                  prev.filter((_, i) => i !== index)
+                )
+              }
+              className="absolute top-1 right-1 text-destructive text-xs"
+            >
+              ✕
+            </button>
+          </div>
+        ))}
+      </div>
+    )}
+
+    <p className="text-xs text-muted-foreground">
+      Uploading new files will replace existing media.
+    </p>
+  </div>
+
+</div>
               <div className="flex justify-end gap-4 pt-4">
                 <button
                   onClick={() => setEditOpen(false)}
