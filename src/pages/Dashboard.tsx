@@ -7,6 +7,7 @@ import Navbar from "@/components/Navbar";
 import CapsuleCard, { Capsule } from "@/components/CapsuleCard";
 import API from "@/api/axios";
 import { AxiosError } from "axios";
+import { AnimatePresence } from "framer-motion";
 
 // Mock data for demonstration
 
@@ -157,13 +158,20 @@ const [error, setError] = useState<string | null>(null);
   </div>
 ) : (
   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-    {capsules.map((capsule, index) => (
-      <CapsuleCard
-        key={capsule.id}
-        capsule={capsule}
-        index={index}
-      />
-    ))}
+    <AnimatePresence>
+  {capsules.map((capsule, index) => (
+    <CapsuleCard
+      key={capsule.id}
+      capsule={capsule}
+      index={index}
+      onDelete={() =>
+        setCapsules((prev) =>
+          prev.filter((c) => c.id !== capsule.id)
+        )
+      }
+    />
+  ))}
+</AnimatePresence>
   </div>
 )}
         {/* Floating Button */}
