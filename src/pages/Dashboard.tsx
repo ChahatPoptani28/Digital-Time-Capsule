@@ -30,18 +30,22 @@ const Dashboard = () => {
       const response = await API.get("/capsules");
       const data = response.data.data;
 
-      const formattedCapsules: Capsule[] = data.map((c: any) => ({
+      const formattedCapsules: Capsule[] = data.map((c: any) => {
+      const media = c.media || [];
+
+      return {
         id: c._id,
         title: c.title,
         message: c.message,
         unlockDate: new Date(c.unlockDate),
         isUnlocked: c.status === "unlocked",
-        media: c.media || [],
-        hasMessage: true,
-        hasImage: false,
-        hasVideo: false,
+        media,
+        hasMessage: !!c.message,
+        hasImage: media.some((m: any) => m.type === "image"),
+        hasVideo: media.some((m: any) => m.type === "video"),
         createdAt: new Date(c.unlockDate),
-      }));
+        };
+      });
 
       setCapsules(formattedCapsules);
       setError(null);

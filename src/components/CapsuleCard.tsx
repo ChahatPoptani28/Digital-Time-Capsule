@@ -72,7 +72,9 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const MAX_FILES = 5;
+  const MAX_SIZE = 20 * 1024 * 1024; // 20MB
   /* ================= FORMAT DATE FOR datetime-local ================= */
 
   const formatDateTimeLocal = (date: Date | string) => {
@@ -114,11 +116,33 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   };
 
   /* ================= UPDATE ================= */
+  const handleFiles = (files: File[]) => {
+  const combined = [...editMedia,...files];
+  if (combined.length > MAX_FILES) {
+    toast({
+      title: "Too many files",
+      description: `Maximum ${MAX_FILES} files allowed.`,
+      variant: "destructive",
+    });
+    return;
+  }
 
+  const oversized = files.find((f) => f.size > MAX_SIZE);
+  if (oversized) {
+    toast({
+      title: "File too large",
+      description: "Max file size is 20MB.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  setEditMedia(combined);
+};
   const handleUpdate = async () => {
     try {
       setIsUpdating(true);
-
+      setUploadProgress(0);
       const formData = new FormData();
       formData.append("title", editTitle);
       formData.append("message", editMessage);
@@ -131,8 +155,15 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
       }
 
       await API.put(`/capsules/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
+  headers: { "Content-Type": "multipart/form-data" },
+  onUploadProgress: (progressEvent) => {
+    const percent = Math.round(
+      (progressEvent.loaded * 100) /
+        (progressEvent.total || 1)
+    );
+    setUploadProgress(percent);
+  },
+});
 
       toast({
         title: "Capsule updated",
@@ -140,12 +171,17 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
       });
 
       setEditOpen(false);
+      setEditMedia([]);
+      setUploadProgress(0);
       onDelete?.();
     } catch (err: any) {
       toast({
         title: "Update failed",
         description:
-          err.response?.data?.message || "Something went wrong",
+          err.response?.data?.message || 
+          err.response?.data?.error?.message ||
+          err.respone?.error || 
+          "Something went wrong",
         variant: "destructive",
       });
     } finally {
@@ -182,7 +218,9 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                     setEditTitle(title);
                     setEditMessage(message || "");
                     setEditDate(formatDateTimeLocal(unlockDate));
-
+                    setEditMedia([]);
+                    setUploadProgress(0);
+                    setIsUpdating(false);
                     setEditOpen(true);
                   }}
                   className="text-primary hover:opacity-80 transition"
@@ -389,7 +427,7 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
       setIsDragging(false);
 
       const files = Array.from(e.dataTransfer.files);
-      setEditMedia(files);
+      handleFiles(files);
     }}
     className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition ${
       isDragging
@@ -413,7 +451,7 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
       multiple
       hidden
       onChange={(e) =>
-        setEditMedia(
+        handleFiles(
           e.target.files ? Array.from(e.target.files) : []
         )
       }
@@ -448,7 +486,13 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
               🎵 Audio
             </div>
           )}
-
+          {!file.type.startsWith("image/") &&
+ !file.type.startsWith("video/") &&
+ !file.type.startsWith("audio/") && (
+  <div className="flex items-center justify-center h-24 bg-muted text-xs">
+    📄 {file.name}
+  </div>
+)}
           <button
             onClick={() =>
               setEditMedia((prev) =>
@@ -465,10 +509,18 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   )}
 
   <p className="text-xs text-muted-foreground">
-    Uploading new files will replace existing media.
+    New files will be added to existing media.
   </p>
 
 </div>
+              {isUpdating && uploadProgress > 0 && (
+  <div className="w-full bg-muted rounded-full h-2">
+    <div
+      className="bg-primary h-2 rounded-full transition-all"
+      style={{ width: `${uploadProgress}%` }}
+    />
+  </div>
+)}
               <div className="flex justify-end gap-4 pt-4">
                 <button
                   onClick={() => setEditOpen(false)}
