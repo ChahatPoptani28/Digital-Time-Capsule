@@ -140,13 +140,40 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   setEditMedia(combined);
 };
   const handleUpdate = async () => {
+   
+    if (!editTitle.trim()) {
+      toast({
+        title: "Title required",
+        description: "Capsule title cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!editMessage.trim()) {
+      toast({
+        title: "Description required",
+        description: "Capsule description cannot be empty.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (editDate && new Date(editDate) <= new Date()) {
+       toast({
+        title: "Invalid date",
+        description: "Unlock date must be in the future.",
+        variant: "destructive",
+      });
+      return;
+    }
     try {
       setIsUpdating(true);
       setUploadProgress(0);
       const formData = new FormData();
       formData.append("title", editTitle);
       formData.append("message", editMessage);
-      formData.append("unlockDate", editDate);
+     if(editDate){
+       formData.append("unlockDate", new Date(editDate).toISOString());
+     }
 
       if (editMedia.length > 0) {
         editMedia.forEach((file) => {
@@ -175,18 +202,29 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
       setUploadProgress(0);
       onDelete?.();
     } catch (err: any) {
-      toast({
-        title: "Update failed",
-        description:
-          err.response?.data?.message || 
-          err.response?.data?.error?.message ||
-          err.respone?.error || 
-          "Something went wrong",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
+
+  let backendMessage = "Something went wrong";
+
+  if (err.response?.data?.message) {
+    backendMessage = err.response.data.message;
+  }
+
+  if (backendMessage.includes("Path `title` is required")) {
+    backendMessage = "Capsule title is required.";
+  }
+
+  if (backendMessage.includes("Path `message` is required")) {
+    backendMessage = "Capsule description is required.";
+  }
+
+  toast({
+    title: "Update failed",
+    description: backendMessage,
+    variant: "destructive",
+  });
+} finally{
+  setIsUpdating(false)
+}
   };
 
   return (
@@ -530,7 +568,10 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                 </button>
 
                 <button
-                  disabled={isUpdating}
+                  disabled={isUpdating ||
+                            !editTitle.trim() ||
+                            !editMessage.trim()
+                  }
                   onClick={handleUpdate}
                   className="px-5 py-2 rounded-xl bg-primary text-white disabled:opacity-50"
                 >
