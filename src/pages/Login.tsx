@@ -33,13 +33,15 @@ const Login = () => {
       const res = await loginUser({ email, password });
       console.log("Login response:", res.data);
       const token = res.data.token;
+      const userName = res.data.userName;
+      
       if (!token) {
   throw new Error("Token not received from backend");
 }
 
       
       localStorage.setItem("token", token);
-
+      localStorage.setItem("userName", userName);
       toast({
         title: "Login successful 🎉",
         description: "Welcome back!",

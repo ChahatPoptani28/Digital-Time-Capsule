@@ -14,7 +14,7 @@ const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const userName = "Alex";
+  const userName = localStorage.getItem("userName").split(' ')[0];
 
   const unlockedCount = capsules.filter((c) => c.isUnlocked).length;
   const lockedCount = capsules.filter((c) => !c.isUnlocked).length;
