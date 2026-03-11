@@ -68,26 +68,19 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   const [editTitle, setEditTitle] = useState(title);
   const [editMessage, setEditMessage] = useState(message || "");
   const [editDate, setEditDate] = useState("");
-  const [editMedia, setEditMedia] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const MAX_FILES = 5;
-  const MAX_SIZE = 20 * 1024 * 1024; // 20MB
   /* ================= FORMAT DATE FOR datetime-local ================= */
 
-  const formatDateTimeLocal = (date: Date | string) => {
-    const d = new Date(date);
+ const formatDate = (date: Date | string) => {
+  const d = new Date(date);
 
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    const hours = String(d.getHours()).padStart(2, "0");
-    const minutes = String(d.getMinutes()).padStart(2, "0");
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
 
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
-  };
+  return `${year}-${month}-${day}`;
+};
 
   /* ================= DELETE ================= */
 
@@ -116,116 +109,81 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
   };
 
   /* ================= UPDATE ================= */
-  const handleFiles = (files: File[]) => {
-  const combined = [...editMedia,...files];
-  if (combined.length > MAX_FILES) {
+
+ const handleUpdate = async () => {
+
+  if (!editTitle.trim()) {
     toast({
-      title: "Too many files",
-      description: `Maximum ${MAX_FILES} files allowed.`,
+      title: "Title required",
+      description: "Capsule title cannot be empty.",
       variant: "destructive",
     });
     return;
   }
 
-  const oversized = files.find((f) => f.size > MAX_SIZE);
-  if (oversized) {
+  if (!editMessage.trim()) {
     toast({
-      title: "File too large",
-      description: "Max file size is 20MB.",
+      title: "Description required",
+      description: "Capsule description cannot be empty.",
       variant: "destructive",
     });
     return;
   }
 
-  setEditMedia(combined);
+  if (editDate && new Date(editDate) <= new Date()) {
+    toast({
+      title: "Invalid date",
+      description: "Unlock date must be in the future.",
+      variant: "destructive",
+    });
+    return;
+  }
+
+  try {
+    setIsUpdating(true);
+
+    await API.put(`/capsules/${id}`, {
+      title: editTitle,
+      message: editMessage,
+      unlockDate: editDate
+        ? new Date(editDate).toISOString()
+        : undefined,
+    });
+
+    toast({
+      title: "Capsule updated",
+      description: "Memory updated successfully.",
+    });
+
+    setEditOpen(false);
+    onDelete?.();
+
+  } catch (err: any) {
+
+    let backendMessage = "Something went wrong";
+
+    if (err.response?.data?.message) {
+      backendMessage = err.response.data.message;
+    }
+
+    if (backendMessage.includes("Path `title` is required")) {
+      backendMessage = "Capsule title is required.";
+    }
+
+    if (backendMessage.includes("Path `message` is required")) {
+      backendMessage = "Capsule description is required.";
+    }
+
+    toast({
+      title: "Update failed",
+      description: backendMessage,
+      variant: "destructive",
+    });
+
+  } finally {
+    setIsUpdating(false);
+  }
 };
-  const handleUpdate = async () => {
-   
-    if (!editTitle.trim()) {
-      toast({
-        title: "Title required",
-        description: "Capsule title cannot be empty.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (!editMessage.trim()) {
-      toast({
-        title: "Description required",
-        description: "Capsule description cannot be empty.",
-        variant: "destructive",
-      });
-      return;
-    }
-    if (editDate && new Date(editDate) <= new Date()) {
-       toast({
-        title: "Invalid date",
-        description: "Unlock date must be in the future.",
-        variant: "destructive",
-      });
-      return;
-    }
-    try {
-      setIsUpdating(true);
-      setUploadProgress(0);
-      const formData = new FormData();
-      formData.append("title", editTitle);
-      formData.append("message", editMessage);
-     if(editDate){
-       formData.append("unlockDate", new Date(editDate).toISOString());
-     }
-
-      if (editMedia.length > 0) {
-        editMedia.forEach((file) => {
-          formData.append("media", file);
-        });
-      }
-
-      await API.put(`/capsules/${id}`, formData, {
-  headers: { "Content-Type": "multipart/form-data" },
-  onUploadProgress: (progressEvent) => {
-    const percent = Math.round(
-      (progressEvent.loaded * 100) /
-        (progressEvent.total || 1)
-    );
-    setUploadProgress(percent);
-  },
-});
-
-      toast({
-        title: "Capsule updated",
-        description: "Memory updated successfully.",
-      });
-
-      setEditOpen(false);
-      setEditMedia([]);
-      setUploadProgress(0);
-      onDelete?.();
-    } catch (err: any) {
-
-  let backendMessage = "Something went wrong";
-
-  if (err.response?.data?.message) {
-    backendMessage = err.response.data.message;
-  }
-
-  if (backendMessage.includes("Path `title` is required")) {
-    backendMessage = "Capsule title is required.";
-  }
-
-  if (backendMessage.includes("Path `message` is required")) {
-    backendMessage = "Capsule description is required.";
-  }
-
-  toast({
-    title: "Update failed",
-    description: backendMessage,
-    variant: "destructive",
-  });
-} finally{
-  setIsUpdating(false)
-}
-  };
 
   return (
     <>
@@ -248,23 +206,23 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
               </CardTitle>
 
               <div className="flex items-center gap-3">
-                {/* EDIT BUTTON */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
+         {/* EDIT BUTTON */}
+            {!isUnlocked && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
 
-                    setEditTitle(title);
-                    setEditMessage(message || "");
-                    setEditDate(formatDateTimeLocal(unlockDate));
-                    setEditMedia([]);
-                    setUploadProgress(0);
-                    setIsUpdating(false);
-                    setEditOpen(true);
-                  }}
-                  className="text-primary hover:opacity-80 transition"
-                >
-                  <Pencil className="w-5 h-5" />
-                </button>
+                  setEditTitle(title);
+                  setEditMessage(message || "");
+                  setEditDate(formatDate(unlockDate));
+                  setIsUpdating(false);
+                  setEditOpen(true);
+                }}
+                className="text-primary hover:opacity-80 transition"
+              >
+                <Pencil className="w-5 h-5" />
+              </button>
+            )}
 
                 {/* DELETE BUTTON */}
                 <AlertDialog>
@@ -403,162 +361,11 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
               />
 
               <input
-                type="datetime-local"
+                type="date"
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
                 className="w-full border rounded-xl px-4 py-3"
               />
-              {/* ================= MEDIA SECTION ================= */}
-
-
-<div className="space-y-4">
-
-  <h3 className="text-sm font-semibold">
-    Current Media
-  </h3>
-
-  {capsule.media && capsule.media.length > 0 ? (
-    <div className="grid grid-cols-3 gap-3">
-      {capsule.media.map((item, index) => (
-        <div
-          key={index}
-          className="relative rounded-xl overflow-hidden border"
-        >
-          {item.type === "image" && (
-            <img
-              src={item.url}
-              className="w-full h-24 object-cover"
-            />
-          )}
-
-          {item.type === "video" && (
-            <video
-              src={item.url}
-              className="w-full h-24 object-cover"
-            />
-          )}
-
-          {item.type === "audio" && (
-            <div className="flex items-center justify-center h-24 bg-muted text-sm">
-              🎵 Audio
-            </div>
-          )}
-        </div>
-      ))}
-    </div>
-  ) : (
-    <p className="text-xs text-muted-foreground">
-      No media attached
-    </p>
-  )}
-
-  {/* Drag & Drop Zone */}
-
-  <div
-    onDragOver={(e) => {
-      e.preventDefault();
-      setIsDragging(true);
-    }}
-    onDragLeave={() => setIsDragging(false)}
-    onDrop={(e) => {
-      e.preventDefault();
-      setIsDragging(false);
-
-      const files = Array.from(e.dataTransfer.files);
-      handleFiles(files);
-    }}
-    className={`border-2 border-dashed rounded-2xl p-6 text-center cursor-pointer transition ${
-      isDragging
-        ? "border-primary bg-primary/10"
-        : "border-muted"
-    }`}
-    onClick={() =>
-      document.getElementById("editMediaInput")?.click()
-    }
-  >
-    <p className="text-sm font-medium">
-      Drag & Drop media here
-    </p>
-    <p className="text-xs text-muted-foreground">
-      or click to upload
-    </p>
-
-    <input
-      id="editMediaInput"
-      type="file"
-      multiple
-      hidden
-      onChange={(e) =>
-        handleFiles(
-          e.target.files ? Array.from(e.target.files) : []
-        )
-      }
-    />
-  </div>
-
-  {/* Selected Files Preview */}
-
-  {editMedia.length > 0 && (
-    <div className="grid grid-cols-3 gap-3">
-      {editMedia.map((file, index) => (
-        <div
-          key={index}
-          className="relative rounded-xl overflow-hidden border"
-        >
-          {file.type.startsWith("image/") && (
-            <img
-              src={URL.createObjectURL(file)}
-              className="w-full h-24 object-cover"
-            />
-          )}
-
-          {file.type.startsWith("video/") && (
-            <video
-              src={URL.createObjectURL(file)}
-              className="w-full h-24 object-cover"
-            />
-          )}
-
-          {file.type.startsWith("audio/") && (
-            <div className="flex items-center justify-center h-24 bg-muted text-sm">
-              🎵 Audio
-            </div>
-          )}
-          {!file.type.startsWith("image/") &&
- !file.type.startsWith("video/") &&
- !file.type.startsWith("audio/") && (
-  <div className="flex items-center justify-center h-24 bg-muted text-xs">
-    📄 {file.name}
-  </div>
-)}
-          <button
-            onClick={() =>
-              setEditMedia((prev) =>
-                prev.filter((_, i) => i !== index)
-              )
-            }
-            className="absolute top-1 right-1 bg-black/70 text-white text-xs rounded-full px-2"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-    </div>
-  )}
-
-  <p className="text-xs text-muted-foreground">
-    New files will be added to existing media.
-  </p>
-
-</div>
-              {isUpdating && uploadProgress > 0 && (
-  <div className="w-full bg-muted rounded-full h-2">
-    <div
-      className="bg-primary h-2 rounded-full transition-all"
-      style={{ width: `${uploadProgress}%` }}
-    />
-  </div>
-)}
               <div className="flex justify-end gap-4 pt-4">
                 <button
                   onClick={() => setEditOpen(false)}
