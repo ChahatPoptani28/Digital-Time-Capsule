@@ -183,7 +183,7 @@ const Dashboard = () => {
                   key={capsule.id}
                   capsule={capsule}
                   index={index}
-                  onDelete={fetchCapsules}   // 👈 refresh after edit/delete
+                  onDelete={fetchCapsules}   
                 />
               ))}
             </AnimatePresence>
