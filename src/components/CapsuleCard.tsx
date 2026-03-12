@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 import {
   Lock,
   Unlock,
-  Calendar,
   Image,
   Video,
   FileText,
   Trash2,
   Pencil,
+  Calendar,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +26,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "./ui/button";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 export interface Capsule {
   id: string;
@@ -360,12 +365,38 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                 className="w-full border rounded-xl px-4 py-3 h-28"
               />
 
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="w-full border rounded-xl px-4 py-3"
-              />
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="lg"
+                    className={cn(
+                      "w-full justify-start text-left font-normal rounded-xl px-4 py-3 border bg-transparent hover:bg-transparent shadow-none text-foreground focus-visible:ring-0 focus-visible:ring-offset-0",
+                      !editDate && "text-muted-foreground"
+                    )}
+                  >
+                    <Calendar className="mr-2 h-4 w-4" />
+                    {editDate ? format(new Date(editDate), "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0 z-[9999]"
+                  align="start"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <CalendarComponent
+                    mode="single"
+                    selected={editDate ? new Date(editDate) : undefined}
+                    onSelect={(date) => {
+                      if (date) setEditDate(formatDate(date));
+                    }}
+                    disabled={(date) => date <= new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
               <div className="flex justify-end gap-4 pt-4">
                 <button
                   onClick={() => setEditOpen(false)}

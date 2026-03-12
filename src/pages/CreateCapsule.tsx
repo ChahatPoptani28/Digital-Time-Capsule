@@ -325,7 +325,7 @@ const CreateCapsule = () => {
                         mode="single"
                         selected={unlockDate}
                         onSelect={setUnlockDate}
-                        disabled={(date) => date < new Date()}
+                        disabled={(date) => date <= new Date()}
                         initialFocus
                         className="pointer-events-auto"
                       />
