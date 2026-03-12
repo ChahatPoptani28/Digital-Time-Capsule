@@ -206,8 +206,8 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
         >
           <CardHeader className="pb-3">
             <div className="flex items-start justify-between gap-2">
-              <CardTitle className="line-clamp-1 flex-1">
-                {title}
+              <CardTitle className="flex-1">
+                {title.length < 18 ? title : title.slice(0,18)+"..."}
               </CardTitle>
 
               <div className="flex items-center gap-3">
