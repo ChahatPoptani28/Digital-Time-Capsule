@@ -104,7 +104,7 @@ const { toast } = useToast();
 
   return (
     <div className="min-h-screen pb-12">
-      <Navbar isLoggedIn userName="Alex" />
+      <Navbar isLoggedIn userName={localStorage.getItem("userName").split(' ')[0]} />
 
       {showConfetti && <Confetti />}
 

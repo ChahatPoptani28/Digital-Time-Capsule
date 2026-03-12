@@ -1,13 +1,26 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Calendar, Image, Video, FileText, Sparkles, X, Upload, Check } from "lucide-react";
+import {
+  Calendar,
+  Image,
+  Video,
+  FileText,
+  Sparkles,
+  X,
+  Upload,
+  Check,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import { format } from "date-fns";
@@ -36,49 +49,48 @@ const CreateCapsule = () => {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  if (!unlockDate) return;
+    if (!unlockDate) return;
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const formData = new FormData();
+      const formData = new FormData();
 
-    formData.append("title", title);
-    formData.append("message", message);
-    formData.append("unlockDate", unlockDate.toISOString());
+      formData.append("title", title);
+      formData.append("message", message);
+      formData.append("unlockDate", unlockDate.toISOString());
 
-    // Append multiple images (max 5)
-    images.forEach((file) => {
-      formData.append("media", file);
-    });
+      // Append multiple images (max 5)
+      images.forEach((file) => {
+        formData.append("media", file);
+      });
 
-    await API.post("/capsules", formData);
+      await API.post("/capsules", formData);
 
-    toast({
-      title: "Capsule sealed! ✨",
-      description: `Your memory will unlock on ${format(unlockDate, "PPP")}`,
-    });
+      toast({
+        title: "Capsule sealed! ✨",
+        description: `Your memory will unlock on ${format(unlockDate, "PPP")}`,
+      });
 
-    navigate("/dashboard");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Create capsule error:", error);
 
-  } catch (error) {
-  console.error("Create capsule error:", error);
+      let errorMessage = "Something went wrong";
 
-  let errorMessage = "Something went wrong";
+      if (error instanceof AxiosError) {
+        errorMessage = error.response?.data?.message || errorMessage;
+      }
 
-  if (error instanceof AxiosError) {
-    errorMessage = error.response?.data?.message || errorMessage;
-  }
-
-  toast({
-    title: "Failed to create capsule",
-    description: errorMessage,
-    variant: "destructive",
-  });
-}
-};
+      toast({
+        title: "Failed to create capsule",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    }
+  };
 
   const isStep1Complete = title.length > 0;
   const isStep2Complete = message.length > 0;
@@ -92,8 +104,10 @@ const CreateCapsule = () => {
 
   return (
     <div className="min-h-screen pb-12">
-      <Navbar isLoggedIn userName="Alex" />
-
+      <Navbar
+        isLoggedIn
+        userName={localStorage.getItem("userName").split(" ")[0]}
+      />
       <main className="container mx-auto px-4 py-8 max-w-3xl">
         {/* Header */}
         <motion.div
@@ -101,12 +115,36 @@ const CreateCapsule = () => {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">
-            Create a <span className="gradient-text">Time Capsule</span>
-          </h1>
-          <p className="text-muted-foreground">
-            Preserve your thoughts, photos, and memories for the future
-          </p>
+          {step === 1 ? (
+            <div className="flex">
+              <div className="me-[88.5px]">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  ◀
+                </Button>
+              </div>
+              <div className="">
+                <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">
+                  Create a <span className="gradient-text">Time Capsule</span>
+                </h1>
+                <p className="text-muted-foreground">
+                  Preserve your thoughts, photos, and memories for the future
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="">
+              <h1 className="text-3xl md:text-4xl font-heading font-bold mb-2">
+                Create a <span className="gradient-text">Time Capsule</span>
+              </h1>
+              <p className="text-muted-foreground">
+                Preserve your thoughts, photos, and memories for the future
+              </p>
+            </div>
+          )}
         </motion.div>
 
         {/* Progress Steps */}
@@ -125,8 +163,8 @@ const CreateCapsule = () => {
                 step === s.number
                   ? "bg-primary text-primary-foreground shadow-glow"
                   : s.complete
-                  ? "bg-unlocked/20 text-unlocked"
-                  : "bg-muted text-muted-foreground"
+                    ? "bg-unlocked/20 text-unlocked"
+                    : "bg-muted text-muted-foreground",
               )}
             >
               <div
@@ -135,8 +173,8 @@ const CreateCapsule = () => {
                   step === s.number
                     ? "bg-primary-foreground/20"
                     : s.complete
-                    ? "bg-unlocked/20"
-                    : "bg-foreground/10"
+                      ? "bg-unlocked/20"
+                      : "bg-foreground/10",
                 )}
               >
                 {s.complete && step !== s.number ? (
@@ -145,7 +183,9 @@ const CreateCapsule = () => {
                   s.number
                 )}
               </div>
-              <span className="hidden sm:inline text-sm font-medium">{s.title}</span>
+              <span className="hidden sm:inline text-sm font-medium">
+                {s.title}
+              </span>
             </button>
           ))}
         </motion.div>
@@ -276,7 +316,11 @@ const CreateCapsule = () => {
               </Card>
 
               <div className="flex justify-between">
-                <Button type="button" variant="ghost" onClick={() => setStep(1)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setStep(1)}
+                >
                   Back
                 </Button>
                 <Button
@@ -313,7 +357,7 @@ const CreateCapsule = () => {
                         size="lg"
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !unlockDate && "text-muted-foreground"
+                          !unlockDate && "text-muted-foreground",
                         )}
                       >
                         <Calendar className="mr-2 h-4 w-4" />
@@ -348,7 +392,9 @@ const CreateCapsule = () => {
                         size="sm"
                         onClick={() =>
                           setUnlockDate(
-                            new Date(Date.now() + option.days * 24 * 60 * 60 * 1000)
+                            new Date(
+                              Date.now() + option.days * 24 * 60 * 60 * 1000,
+                            ),
                           )
                         }
                       >
@@ -367,20 +413,29 @@ const CreateCapsule = () => {
                 >
                   <Card variant="unlocked" className="mb-6">
                     <CardContent className="p-6">
-                      <h3 className="font-heading font-semibold mb-3">Capsule Preview</h3>
+                      <h3 className="font-heading font-semibold mb-3">
+                        Capsule Preview
+                      </h3>
                       <div className="space-y-2 text-sm">
                         <p>
                           <span className="text-muted-foreground">Title:</span>{" "}
                           <span className="font-medium">{title}</span>
                         </p>
                         <p>
-                          <span className="text-muted-foreground">Unlocks:</span>{" "}
-                          <span className="font-medium">{format(unlockDate, "PPP")}</span>
+                          <span className="text-muted-foreground">
+                            Unlocks:
+                          </span>{" "}
+                          <span className="font-medium">
+                            {format(unlockDate, "PPP")}
+                          </span>
                         </p>
                         <p>
-                          <span className="text-muted-foreground">Contents:</span>{" "}
+                          <span className="text-muted-foreground">
+                            Contents:
+                          </span>{" "}
                           <span className="font-medium">
-                            Message{images.length > 0 && `, ${images.length} photo(s)`}
+                            Message
+                            {images.length > 0 && `, ${images.length} photo(s)`}
                           </span>
                         </p>
                       </div>
@@ -390,7 +445,11 @@ const CreateCapsule = () => {
               )}
 
               <div className="flex justify-between">
-                <Button type="button" variant="ghost" onClick={() => setStep(2)}>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setStep(2)}
+                >
                   Back
                 </Button>
                 <Button
@@ -403,7 +462,11 @@ const CreateCapsule = () => {
                   {isLoading ? (
                     <motion.div
                       animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear",
+                      }}
                       className="w-5 h-5 border-2 border-foreground/30 border-t-foreground rounded-full"
                     />
                   ) : (
