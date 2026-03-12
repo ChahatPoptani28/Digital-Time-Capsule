@@ -406,7 +406,7 @@ const CreateCapsule = () => {
               </Card>
 
               {/* Preview */}
-              {unlockDate && (
+              {(isStep1Complete && isStep2Complete && isStep3Complete && unlockDate) && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -456,7 +456,7 @@ const CreateCapsule = () => {
                   type="submit"
                   variant="gold"
                   size="lg"
-                  disabled={!isStep3Complete || isLoading}
+                  disabled={!isStep1Complete || !isStep2Complete || !isStep3Complete || isLoading}
                   className="gap-2"
                 >
                   {isLoading ? (
