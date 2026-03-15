@@ -14,3 +14,14 @@ export const loginUser = (data: {
 }) => {
   return API.post("/auth/login", data);
 };
+
+export const verifyOTP = (data: {
+  email: string;
+  otp: string;
+}) => {
+  return API.post("/auth/verify-otp", data);
+};
+
+export const resendOTP = (data: { email: string }) => {
+  return API.post("/auth/resend-otp", data);
+};

@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
 import { Mail, Lock, User, Clock, Eye, EyeOff, Check } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { AxiosError } from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { registerUser, loginUser } from "@/api/auth";
+import { registerUser } from "@/api/auth";
 
 import {
   Card,
@@ -42,15 +43,17 @@ const Register = () => {
 
     await registerUser({ name, email, password });
 
-    const loginRes = await loginUser({ email, password });
+    toast({
+      title: "Account Created! 🎉",
+      description: "Check your email for the verification code",
+    });
 
-    const token = loginRes.data.token;
-    localStorage.setItem("token", token);
+    // Redirect to OTP verification page with email in state
+    navigate("/verify-otp", { state: { email } });
 
-    navigate("/dashboard");
-
-  } catch (err: any) {
-    setError(err.response?.data?.message || "Registration failed");
+  } catch (err) {
+    const error = err as AxiosError<{ message: string }>;
+    setError(error.response?.data?.message || "Registration failed");
   } finally {
     setIsLoading(false);
   }
