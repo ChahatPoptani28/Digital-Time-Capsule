@@ -31,27 +31,36 @@ const CreateCapsule = () => {
   const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [unlockDate, setUnlockDate] = useState<Date>();
-  const [images, setImages] = useState<File[]>([]);
+  const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files);
-      setImages((prev) => [...prev, ...newFiles].slice(0, 5));
-    }
-  };
+  const handleMediaUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  if (!e.target.files) return;
 
-  const removeImage = (index: number) => {
-    setImages((prev) => prev.filter((_, i) => i !== index));
-  };
+  const newFiles = Array.from(e.target.files);
 
+  setMediaFiles((prev) => [...prev, ...newFiles].slice(0, 10));
+};
+
+  const removeMedia = (index: number) => {
+  setMediaFiles((prev) => prev.filter((_, i) => i !== index));
+};
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!unlockDate) return;
+
+    if (mediaFiles.length === 0) {
+      toast({
+        title: "Media required",
+        description: "Please upload at least one photo, video, or audio.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -63,7 +72,7 @@ const CreateCapsule = () => {
       formData.append("unlockDate", unlockDate.toISOString());
 
       // Append multiple images (max 5)
-      images.forEach((file) => {
+      mediaFiles.forEach((file) => {
         formData.append("media", file);
       });
 
@@ -93,7 +102,7 @@ const CreateCapsule = () => {
   };
 
   const isStep1Complete = title.length > 0;
-  const isStep2Complete = message.length > 0;
+  const isStep2Complete = message.length > 0 && mediaFiles.length > 0; 
   const isStep3Complete = unlockDate !== undefined;
 
   const steps = [
@@ -261,7 +270,7 @@ const CreateCapsule = () => {
                     <Image className="w-5 h-5 text-primary" />
                     Add photos or videos
                     <span className="text-sm font-normal text-muted-foreground ml-2">
-                      (Optional)
+      
                     </span>
                   </CardTitle>
                 </CardHeader>
@@ -274,42 +283,55 @@ const CreateCapsule = () => {
                         Click to upload or drag and drop
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        PNG, JPG, GIF, MP4 up to 10MB
+                        PNG, JPG, MP3, MP4 up to 100MB
                       </p>
                     </div>
                     <input
                       type="file"
-                      accept="image/*,video/*"
+                      accept="image/*,video/*,audio/*"
                       multiple
                       className="hidden"
-                      onChange={handleImageUpload}
+                      onChange={handleMediaUpload}
                     />
                   </label>
 
                   {/* Preview images */}
-                  {images.length > 0 && (
+                  {mediaFiles.length > 0 && (
                     <div className="grid grid-cols-3 gap-3 mt-4">
-                      {images.map((file, index) => (
-                        <motion.div
-                          key={index}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="relative aspect-square rounded-xl overflow-hidden bg-muted"
-                        >
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Upload ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center hover:scale-110 transition-transform"
-                          >
-                            <X className="w-4 h-4" />
-                          </button>
-                        </motion.div>
-                      ))}
+                      {mediaFiles.map((file, index) => {
+  const url = URL.createObjectURL(file);
+
+  return (
+    <motion.div
+      key={index}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="relative aspect-square rounded-xl overflow-hidden bg-muted"
+    >
+      {file.type.startsWith("image") && (
+        <img src={url} className="w-full h-full object-cover" />
+      )}
+
+      {file.type.startsWith("video") && (
+        <video src={url} className="w-full h-full object-cover" />
+      )}
+
+      {file.type.startsWith("audio") && (
+        <div className="flex items-center justify-center h-full p-2">
+          <audio src={url} controls />
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => removeMedia(index)}
+        className="absolute top-2 right-2 w-6 h-6 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </motion.div>
+  );
+})}
                     </div>
                   )}
                 </CardContent>
@@ -326,7 +348,17 @@ const CreateCapsule = () => {
                 <Button
                   type="button"
                   variant="hero"
-                  onClick={() => setStep(3)}
+                  onClick={() => {
+                    if (mediaFiles.length === 0) {
+                      toast({
+                        title: "Upload required",
+                        description: "Please upload at least one media file.",
+                        variant: "destructive",
+                      });
+                      return;
+                    }
+                    setStep(3);
+                  }}
                   disabled={!isStep2Complete}
                 >
                   Continue
@@ -435,7 +467,7 @@ const CreateCapsule = () => {
                           </span>{" "}
                           <span className="font-medium">
                             Message
-                            {images.length > 0 && `, ${images.length} photo(s)`}
+                            {mediaFiles.length > 0 && `, ${mediaFiles.length} media files(s)`}
                           </span>
                         </p>
                       </div>

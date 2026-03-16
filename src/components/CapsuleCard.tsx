@@ -31,6 +31,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Music } from "lucide-react";
 
 export interface Capsule {
   id: string;
@@ -45,6 +46,7 @@ export interface Capsule {
   hasImage?: boolean;
   hasVideo?: boolean;
   hasMessage?: boolean;
+  hasAudio?: boolean;
   createdAt: Date;
 }
 
@@ -64,6 +66,7 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
     hasImage,
     hasVideo,
     hasMessage,
+    hasAudio,
   } = capsule;
 
   const navigate = useNavigate();
@@ -314,6 +317,12 @@ const CapsuleCard = ({ capsule, index = 0, onDelete }: CapsuleCardProps) => {
                 <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
                   <Video className="w-3 h-3" />
                   <span>Video</span>
+                </div>
+              )}
+              {hasAudio && (
+                <div className="flex items-center gap-1 text-xs text-muted-foreground bg-muted/50 px-2 py-1 rounded-full">
+                  <Music className="w-3 h-3" />
+                  <span>Audio</span>
                 </div>
               )}
             </div>

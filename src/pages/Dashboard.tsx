@@ -43,6 +43,7 @@ const Dashboard = () => {
         hasMessage: !!c.message,
         hasImage: media.some((m: any) => m.type === "image"),
         hasVideo: media.some((m: any) => m.type === "video"),
+        hasAudio: media.some((m: any) => m.type === "audio"),
         createdAt: new Date(c.unlockDate),
         };
       });
