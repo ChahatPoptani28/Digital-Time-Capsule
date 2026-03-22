@@ -1,13 +1,10 @@
 import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Lock, ArrowLeft, Calendar } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import CountdownTimer from "@/components/CountdownTimer";
 import Confetti from "@/components/Confetti";
 import Navbar from "@/components/Navbar";
-import { format } from "date-fns";
 import API from "@/api/axios";
 
 // ================= MAIN =================
@@ -22,6 +19,8 @@ const ViewCapsule = () => {
   const [revealed, setRevealed] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<string | null>(null);
   const [themeIndex, setThemeIndex] = useState(0);
+
+  const [stickers, setStickers] = useState<any[]>([]);
 
   const themes = ["classic", "floating", "minimal", "grid", "stack", "glass"];
 
@@ -64,351 +63,332 @@ const ViewCapsule = () => {
 
       {showConfetti && <Confetti />}
 
-      <main className="container mx-auto px-6 py-8 max-w-6xl">
+      {/* ===== 3 SECTION LAYOUT ===== */}
+      <main className="max-w-[1500px] mx-auto px-4 py-6 flex gap-6">
 
-        {!isLocked ? (
-          <AnimatePresence mode="wait">
-            {revealed && (
-              <div className="relative">
+        {/* LEFT - STICKERS */}
+  {/* 🔒 ONLY SHOW WHEN UNLOCKED */}
+  {!isLocked && (
+    <div className="w-[120px] bg-white/60 backdrop-blur-md rounded-2xl p-3 flex flex-col gap-4 shadow-xl">
+      {["⭐","❤️","🔥","🎉","📸"].map((s,i)=>(
+        <div
+          key={i}
+          draggable
+          onDragStart={(e)=> e.dataTransfer.setData("sticker", s)}
+          className="text-2xl text-center cursor-grab hover:scale-110"
+        >
+          {s}
+        </div>
+      ))}
+    </div>
+  )}
 
-                {/* BUTTONS */}
-                <button
-                  onClick={() => setThemeIndex((prev) => (prev - 1 + themes.length) % themes.length)}
-                  className="absolute left-2 z-20 bg-white/80 p-3 rounded-full"
-                >
-                  ←
-                </button>
+        {/* CENTER - CARD */}
+        <div className="flex-1 relative">
 
-                <button
-                  onClick={() => setThemeIndex((prev) => (prev + 1) % themes.length)}
-                  className="absolute right-2 z-20 bg-white/80 p-3 rounded-full"
-                >
-                  →
-                </button>
+          {!isLocked ? (
+            <AnimatePresence mode="wait">
+              {revealed && (
+                <div className="relative">
 
-                {/* CARD */}
-                <div className="flex justify-center">
+                  {/* ARROWS */}
+                  <button
+                    onClick={() => setThemeIndex((p) => (p - 1 + themes.length) % themes.length)}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full"
+                  >←</button>
+
+                  <button
+                    onClick={() => setThemeIndex((p) => (p + 1) % themes.length)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-white/80 p-3 rounded-full"
+                  >→</button>
+
                   <motion.div
                     key={themeIndex}
-                    className="w-full max-w-[1200px]"
+                    className="w-full"
                     drag="x"
                     dragConstraints={{ left: 0, right: 0 }}
-                    onDragEnd={(e, info) => {
-                      if (info.offset.x < -80) setThemeIndex((p) => (p + 1) % themes.length);
-                      if (info.offset.x > 80) setThemeIndex((p) => (p - 1 + themes.length) % themes.length);
+                    onDragEnd={(e,info)=>{
+                      if(info.offset.x < -80) setThemeIndex(p=> (p+1)%themes.length)
+                      if(info.offset.x > 80) setThemeIndex(p=> (p-1+themes.length)%themes.length)
                     }}
-                  >
-                    {themes[themeIndex] === "classic" && <ClassicCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                    {themes[themeIndex] === "floating" && <FloatingCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                    {themes[themeIndex] === "minimal" && <MinimalCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                    {themes[themeIndex] === "grid" && <GridCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                    {themes[themeIndex] === "stack" && <StackCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                    {themes[themeIndex] === "glass" && <GlassCard message={message} media={media} setSelectedMedia={setSelectedMedia} />}
-                  </motion.div>
-                </div>
-              </div>
-            )}
-          </AnimatePresence>
-        ) : (
-          <Card className="max-w-xl mx-auto p-10 text-center">
-            <h1>{title}</h1>
-            <CountdownTimer unlockDate={new Date(unlockDate)} />
-          </Card>
-        )}
+                    onDragOver={(e)=> e.preventDefault()}
+                          onDrop={(e)=>{
+        const emoji = e.dataTransfer.getData("sticker")
+        const rect = e.currentTarget.getBoundingClientRect()
 
-        {/* MODAL */}
-        <AnimatePresence mode="wait">
-          {selectedMedia && (
-            <motion.div
-              className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
-              onClick={() => setSelectedMedia(null)}
-            >
-              {selectedMedia.includes(".mp4") ? (
-                <video src={selectedMedia} controls autoPlay className="max-h-[80%]" />
-              ) : selectedMedia.includes(".mp3") ? (
-                <audio src={selectedMedia} controls autoPlay />
-              ) : (
-                <img src={selectedMedia} className="max-h-[80%]" />
+        // 🚫 prevent drop on media
+        if ((e.target as HTMLElement).closest(".media-item")) return;
+
+        setStickers(prev=>[
+          ...prev,
+          {
+            id: Date.now(),
+            emoji,
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+          }
+        ])
+      }}
+                  >
+                    {themes[themeIndex] === "classic" && <ClassicCard {...{message,media,setSelectedMedia}} />}
+                    {themes[themeIndex] === "floating" && <FloatingCard {...{message,media,setSelectedMedia}} />}
+                    {themes[themeIndex] === "minimal" && <MinimalCard {...{message,media,setSelectedMedia}} />}
+                    {themes[themeIndex] === "grid" && <GridCard {...{message,media,setSelectedMedia}} />}
+                    {themes[themeIndex] === "stack" && <StackCard {...{message,media,setSelectedMedia}} />}
+                    {themes[themeIndex] === "glass" && <GlassCard {...{message,media,setSelectedMedia}} />}
+                  </motion.div>
+
+                  {/* STICKERS */}
+                  {stickers.map((s)=>(
+                    <motion.div
+                      key={s.id}
+                      drag
+                      style={{ position:"absolute", top:s.y, left:s.x }}
+                      className="text-2xl cursor-move"
+                    >
+                      {s.emoji}
+                    </motion.div>
+                  ))}
+
+                </div>
               )}
-            </motion.div>
+            </AnimatePresence>
+          ) : (
+            <Card className="max-w-xl mx-auto p-10 text-center">
+              <h1>{title}</h1>
+              <CountdownTimer unlockDate={new Date(unlockDate)} />
+            </Card>
           )}
-        </AnimatePresence>
+
+        </div>
+
+        {/* RIGHT - AUDIO */}
+        <div className="w-[260px] bg-white/60 backdrop-blur-md rounded-2xl p-4 shadow-xl overflow-y-auto">
+          <h3 className="font-semibold mb-4">🎵 Audio</h3>
+
+          {media?.filter((m:any)=>m.type==="audio").map((a:any,i:number)=>(
+            <div key={i} className="mb-4">
+              <audio controls className="w-full">
+                <source src={a.url}/>
+              </audio>
+            </div>
+          ))}
+        </div>
 
       </main>
+
+      {/* MODAL */}
+      <AnimatePresence>
+        {selectedMedia && (
+          <motion.div
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+            onClick={() => setSelectedMedia(null)}
+          >
+            {selectedMedia.includes(".mp4") ? (
+              <video src={selectedMedia} controls autoPlay className="max-h-[80%]" />
+            ) : selectedMedia.includes(".mp3") ? (
+              <audio src={selectedMedia} controls autoPlay />
+            ) : (
+              <img src={selectedMedia} className="max-h-[80%]" />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };
 
-// ================= MEDIA RENDERER =================
+// ================= MEDIA =================
 
-const MediaRenderer = ({ item, onClick }: any) => {
-  return (
-    <div
-      onClick={onClick}
-      className="bg-white p-3 rounded-xl shadow-xl cursor-pointer transition hover:scale-105"
-    >
-      {/* POLAROID FRAME */}
-      <div className="bg-white p-2 rounded-lg">
-        {item.type === "image" && (
-          <img
-            src={item.url}
-            onError={(e:any)=> e.target.src="/placeholder.png"}
-            className="w-full h-[180px] object-cover rounded"
-          />
-        )}
+const MediaRenderer = ({ item, onClick }: any) => (
+  <div onClick={onClick} className="media-item bg-white p-3 rounded-xl shadow-xl cursor-pointer">
+    {item.type === "image" && <img src={item.url} className="w-full h-[200px] object-cover rounded"/>}
+    {item.type === "video" && <video src={item.url} controls className="w-full h-[200px]"/>}
+  </div>
+);
 
-        {item.type === "video" && (
-          <video
-            src={item.url}
-            onError={(e:any)=> e.target.style.display="none"}
-            controls
-            className="w-full h-[180px] rounded"
-          />
-        )}
+// ================= POSITIONS =================
 
-        {item.type === "audio" && (
-          <div className="flex flex-col items-center">
-            🎵
-            <audio controls className="w-full mt-2">
-              <source src={item.url} />
-            </audio>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
+const POS = [
+  { top:"15%", left:"15%" },
+  { top:"15%", left:"65%" },
+  { top:"45%", left:"25%" },
+  { top:"45%", left:"75%" },
+  { top:"70%", left:"50%" }
+];  
 // ================= THEMES =================
-const POSITION_SLOTS = [
-  { top: "12%", left: "12%" },
-  { top: "12%", left: "42%" },
-  { top: "12%", left: "72%" },
 
-  { top: "40%", left: "15%" },
-  { top: "40%", left: "45%" },
-  { top: "40%", left: "75%" },
+const ClassicCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
 
-  { top: "70%", left: "20%" },
-  { top: "70%", left: "50%" },
-  { top: "70%", left: "75%" },
-];
-
-const getPolaroidPositions = (count: number) => {
-  const shuffled = [...POSITION_SLOTS].sort(() => Math.random() - 0.5);
-
-  return shuffled.slice(0, count).map((pos, i) => ({
-    top: pos.top,
-    left: pos.left,
-   rotate: Math.random() * 20 - 10,
-    zIndex: i,
-  }));
-};
-
-const ClassicCard = ({ message, media, setSelectedMedia }: any) => {
-  const safeMedia = media || [];
-  const limitedMedia = media.slice(0, 9);
-  const visualMedia = limitedMedia.filter((m:any)=>m.type !== "audio");
-const audioMedia = limitedMedia.filter((m:any)=>m.type === "audio");
-  const [positions] = useState(getPolaroidPositions(visualMedia.length));
-  if (!media || media.length === 0) {
   return (
-    <Card className="h-[650px] flex items-center justify-center rounded-3xl">
-      <p className="text-lg text-gray-500 text-center px-6">
-        {message || "No memories found 💭"}
-      </p>
-    </Card>
-  );
-}
-  return (
-    <Card className="h-[650px] bg-[#fffaf0] rounded-3xl shadow-2xl p-6 relative overflow-hidden">
+    <Card className="h-[85vh] relative bg-[#fdf6e3] p-6 rounded-3xl">
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
 
-      {/* paper texture */}
-      <div className="absolute inset-0 opacity-20 bg-[url('/paper-texture.png')]" />
-
-      {/* MESSAGE */}
-      <div className="absolute top-6 left-1/2 -translate-x-1/2 text-center">
-        <p className="text-lg font-serif text-gray-700">{message}</p>
-      </div>
-
-      {visualMedia.map((item: any, i: number) => (
-        <div
-          key={i}
-          style={{
-            position: "absolute",
-            top: positions[i].top,
-            left: positions[i].left,
-            transform: `rotate(${positions[i].rotate}deg)`,
-            width: "180px",
-          }}
-        >
-          <MediaRenderer
-            item={item}
-            onClick={() => setSelectedMedia(item.url)}
-          />
+      {visual.map((item:any,i:number)=>(
+        <div key={i} style={{
+          position:"absolute",
+          ...POS[i % POS.length],
+          transform:`rotate(${(i%5-2)*5}deg)`,
+          width:"240px"
+        }}>
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
         </div>
       ))}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 flex-wrap justify-center max-w-[90%]">
-  {audioMedia.map((item:any,i:number)=>(
-    <MediaRenderer
-      key={i}
-      item={item}
-      onClick={()=>setSelectedMedia(item.url)}
-    />
-  ))}
-</div>
     </Card>
   );
 };
-const FloatingCard = ({ message, media, setSelectedMedia }: any) => {
-  const limitedMedia = media.slice(0, 9);
-  const visualMedia = limitedMedia.filter((m:any)=>m.type !== "audio");
-const audioMedia = limitedMedia.filter((m:any)=>m.type === "audio");
-  const [positions] = useState(getPolaroidPositions(visualMedia.length));
-  if (!media || media.length === 0) {
+
+const FloatingCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
+
   return (
-    <Card className="h-[650px] flex items-center justify-center rounded-3xl">
-      <p className="text-lg text-gray-500 text-center px-6">
-        {message || "No memories found 💭"}
-      </p>
-    </Card>
-  );
-}
-  return (
-    
-    <Card className="h-[650px] p-6 rounded-3xl overflow-hidden relative 
-    bg-gradient-to-br from-violet-200 via-pink-100 to-blue-100 shadow-2xl">
+    <Card className="h-[85vh] relative bg-gradient-to-br from-indigo-200 to-pink-200">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
 
-      {/* glow */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.4),transparent)]" />
-
-      {/* MESSAGE */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 text-center max-w-md">
-        <p className="text-xl font-semibold text-gray-800 backdrop-blur-md bg-white/40 px-6 py-3 rounded-2xl">
-          {message}
-        </p>
-      </div>
-
-      {/* MEDIA */}
-      {visualMedia.map((item: any, i: number) => (
-        <motion.div
-          key={i}
-          style={{
-            position: "absolute",
-            top: positions[i].top,
-            left: positions[i].left,
-            transform: `rotate(${positions[i].rotate}deg)`,
-            width: "180px",
-          }}
-          animate={{ y: [0, -12, 0] }}
-          transition={{ duration: 5, repeat: Infinity }}
+      {visual.map((item:any,i:number)=>(
+        <motion.div key={i}
+          style={{ position:"absolute", ...POS[i % POS.length], width:"240px" }}
+          animate={{ y:[0,-10,0] }} transition={{ repeat:Infinity, duration:4 }}
         >
-          <MediaRenderer
-            item={item}
-            onClick={() => setSelectedMedia(item.url)}
-          />
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
         </motion.div>
       ))}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-3 flex-wrap justify-center max-w-[90%]">
-  {audioMedia.map((item:any,i:number)=>(
-    <MediaRenderer
-      key={i}
-      item={item}
-      onClick={()=>setSelectedMedia(item.url)}
-    />
-  ))}
-</div>
-{media.length > 9 && (
-  <div className="absolute bottom-4 right-4 bg-black/60 text-white px-3 py-1 rounded-lg">
-    +{media.length - 9} more
-  </div>
-)}
     </Card>
   );
 };
-const MinimalCard = ({ message, media, setSelectedMedia }: any) => {
+
+const MinimalCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
+
   return (
-    <Card className="h-[650px] bg-gradient-to-br from-black via-gray-900 to-black rounded-3xl shadow-2xl p-10">
+    <Card className="h-[85vh] relative bg-gray-100 rounded-3xl overflow-hidden">
 
-      <div className="text-center text-white mb-8">
-        <p className="text-2xl tracking-wide">{message}</p>
-      </div>
+      {/* MESSAGE */}
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
 
-      <div className="grid grid-cols-3 gap-6">
-        {media.map((item: any, i: number) => (
-          <div className="hover:scale-105 transition">
-            <MediaRenderer
-              item={item}
-              onClick={() => setSelectedMedia(item.url)}
-            />
-          </div>
-        ))}
-      </div>
-
+      {/* MEDIA */}
+      {visual.map((item:any,i:number)=>(
+        <div key={i}
+          style={{
+            position:"absolute",
+            ...POS[i % POS.length],
+            transform:`rotate(${(i%5-2)*4}deg)`,
+            width:"260px"
+          }}>
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
+        </div>
+      ))}
     </Card>
   );
 };
 
-const GridCard = ({ message, media, setSelectedMedia }: any) => (
-  <Card className="h-[650px] rounded-3xl p-10 shadow-2xl 
-  bg-[radial-gradient(circle,#fbcfe8_10%,transparent_10%)] bg-[size:30px_30px]">
+const GridCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
 
-    <p className="text-center mb-6 text-lg font-medium">{message}</p>
+  return (
+    <Card className="h-[85vh] relative rounded-3xl overflow-hidden
+    bg-[radial-gradient(circle,#e0e0e0_10%,transparent_10%)] bg-[size:30px_30px]">
 
-    <div className="grid grid-cols-3 gap-6">
-      {media.map((item: any, i: number) => (
-        <div className="hover:rotate-2 transition">
-          <MediaRenderer
-            item={item}
-            onClick={() => setSelectedMedia(item.url)}
-          />
-        </div>
-      ))}
-    </div>
+     <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
 
-  </Card>
-);
-
-const StackCard = ({ message, media, setSelectedMedia }: any) => (
-  <Card className="h-[650px] bg-gradient-to-br from-yellow-100 to-orange-200 rounded-3xl p-10 shadow-2xl">
-
-    <p className="text-center mb-6">{message}</p>
-
-    <div className="flex justify-center items-center gap-6 flex-wrap">
-      {media.map((item: any, i: number) => (
-        <div
+      {visual.map((item:any,i:number)=>(
+        <div key={i}
           style={{
-            transform: `rotate(${(i % 5 - 2) * 5}deg) scale(${1 - i * 0.03})`,
-            zIndex: 10 - i,
-          }}
-        >
-          <MediaRenderer
-            item={item}
-            onClick={() => setSelectedMedia(item.url)}
-          />
+            position:"absolute",
+            ...POS[i % POS.length],
+            transform:`rotate(${(i%5-2)*6}deg)`,
+            width:"250px"
+          }}>
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
         </div>
       ))}
-    </div>
+    </Card>
+  );
+};
 
-  </Card>
-);
-const GlassCard = ({ message, media, setSelectedMedia }: any) => (
-  <Card className="h-[650px] rounded-3xl p-10 backdrop-blur-xl 
-  bg-white/20 border border-white/30 shadow-2xl">
+const StackCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
 
-    <p className="text-center mb-6 text-gray-800">{message}</p>
+  return (
+    <Card className="h-[85vh] relative bg-gradient-to-br from-yellow-100 to-orange-200 rounded-3xl overflow-hidden">
 
-    <div className="grid grid-cols-3 gap-6">
-      {media.map((item: any, i: number) => (
-        <div className="backdrop-blur-md bg-white/30 p-2 rounded-xl">
-          <MediaRenderer
-            item={item}
-            onClick={() => setSelectedMedia(item.url)}
-          />
+    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
+
+      {visual.map((item:any,i:number)=>(
+        <div key={i}
+          style={{
+            position:"absolute",
+            ...POS[i % POS.length],
+            transform:`rotate(${(i%5-2)*8}deg) scale(${1 - i*0.05})`,
+            width:"260px",
+            zIndex:10-i
+          }}>
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
         </div>
       ))}
-    </div>
+    </Card>
+  );
+};
 
-  </Card>
-);
+const GlassCard = ({ message, media=[], setSelectedMedia }: any) => {
+  const visual = media.filter((m:any)=>m.type!=="audio").slice(0,6);
+
+  return (
+    <Card className="h-[85vh] relative rounded-3xl overflow-hidden
+    bg-white/30 backdrop-blur-xl border border-white/40">
+
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20">
+  <div className="bg-white px-6 py-3 rounded-lg shadow-md">
+    <p className="text-gray-700 font-handwriting text-sm text-center">
+      {message}
+    </p>
+  </div>
+</div>
+
+      {visual.map((item:any,i:number)=>(
+        <div key={i}
+          style={{
+            position:"absolute",
+            ...POS[i % POS.length],
+            transform:`rotate(${(i%5-2)*5}deg)`,
+            width:"250px"
+          }}>
+          <MediaRenderer item={item} onClick={()=>setSelectedMedia(item.url)} />
+        </div>
+      ))}
+    </Card>
+  );
+};
 
 export default ViewCapsule;
