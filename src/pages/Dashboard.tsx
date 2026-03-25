@@ -39,14 +39,14 @@ const Dashboard = () => {
         id: c._id,
         title: c.title,
         message: c.message,
-        unlockDate: new Date(c.unlockDate),
-        isUnlocked: c.status === "unlocked",
+        unlockDate: c.unlockDate ? new Date(c.unlockDate) : null,
+        isUnlocked: c.isUnlocked,
         media,
         hasMessage: !!c.message,
         hasImage: media.some((m: any) => m.type === "image"),
         hasVideo: media.some((m: any) => m.type === "video"),
         hasAudio: media.some((m: any) => m.type === "audio"),
-        createdAt: new Date(c.unlockDate),
+        createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
         };
       });
 

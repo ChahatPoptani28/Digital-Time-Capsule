@@ -12,7 +12,7 @@ import API from "@/api/axios";
 import { Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-
+import { themes } from "../constants/themes";
 const ViewCapsule = () => {
   const { id } = useParams();
 
@@ -22,7 +22,7 @@ const ViewCapsule = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [revealed, setRevealed] = useState(false);
   const navigate = useNavigate();
-const { toast } = useToast();
+  const { toast } = useToast();
 
   // 🔹 Fetch capsule from backend
   useEffect(() => {
@@ -43,7 +43,7 @@ const { toast } = useToast();
 
   // 🔹 Reveal animation for unlocked capsule
   useEffect(() => {
-    if (capsule && !capsule.isLocked) {
+    if (capsule && capsule.isUnlocked) {
       const timer = setTimeout(() => {
         setRevealed(true);
         setShowConfetti(true);
@@ -73,34 +73,13 @@ const { toast } = useToast();
   // 🔹 Safety check
   if (!capsule) return null;
 
-  const { title, message, unlockDate, isLocked, createdAt, media } = capsule;
+  const { title, message, unlockDate, isUnlocked, createdAt, media, theme } = capsule;
+  const selectedTheme = themes.find((t) => t.id === theme);
+  const images = media?.filter((m: any) => m.type === "image");
+  const videos = media?.filter((m: any) => m.type === "video");
+const audios = (media || []).filter((m: any) => m.type === "audio");
+  const safeUnlockDate = unlockDate ? new Date(unlockDate) : null;
 
-  const handleDelete = async () => {
-  const confirmDelete = window.confirm(
-    "Are you sure you want to delete this capsule? This action cannot be undone."
-  );
-
-  if (!confirmDelete) return;
-
-  try {
-    await API.delete(`/capsules/${id}`);
-
-    toast({
-      title: "Capsule deleted",
-      description: "Your memory has been removed successfully.",
-    });
-
-    navigate("/dashboard");
-
-  } catch (err: any) {
-    toast({
-      title: "Delete failed",
-      description:
-        err.response?.data?.message || "Something went wrong",
-      variant: "destructive",
-    });
-  }
-};
 
   return (
     <div className="min-h-screen pb-12">
@@ -108,7 +87,13 @@ const { toast } = useToast();
 
       {showConfetti && <Confetti />}
 
-      <main className="container mx-auto px-4 py-8 max-w-3xl">
+      <main className="w-full px-6 py-10 flex justify-center">
+        <div className="flex justify-center">
+  <div
+  className={`w-full max-w-[1400px] lg:max-w-[1600px] xl:max-w-[1800px]
+  rounded-[40px] shadow-2xl p-12 
+  mx-auto ${selectedTheme?.class || ""}`}
+>
         {/* Back Button */}
         <div className="mb-6">
           <Link to="/dashboard">
@@ -119,7 +104,7 @@ const { toast } = useToast();
           </Link>
         </div>
 
-        {!isLocked ? (
+        {isUnlocked ? (
           /* 🔓 UNLOCKED VIEW */
           <AnimatePresence>
             {revealed && (
@@ -129,69 +114,91 @@ const { toast } = useToast();
                 transition={{ duration: 0.6 }}
               >
                 <div className="text-center mb-8">
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-unlocked/20 border border-unlocked/30 text-unlocked mb-4">
-                    <Heart className="w-4 h-4" />
-                    <span className="text-sm font-medium">Memory Unlocked</span>
-                  </div>
-
                   <h1 className="text-3xl font-heading font-bold mb-2">
                     {title}
                   </h1>
                   <div className="flex justify-center mt-4">
-  <Button
-    variant="destructive"
-    size="sm"
-    className="gap-2"
-    onClick={handleDelete}
-  >
-    <Trash2 className="w-4 h-4" />
-    Delete Capsule
-  </Button>
+
 </div>
 
                   <p className="text-muted-foreground">
                     Created on {format(new Date(createdAt), "MMMM d, yyyy")}
                   </p>
                 </div>
-
-                <Card variant="glass" className="mb-8">
-                  <CardContent className="p-8">
-                    <div className="relative">
-                      <Mail className="absolute -top-2 -left-2 w-8 h-8 text-primary/20" />
-                      <div className="pl-4 border-l-4 border-primary/20">
-                        <p className="whitespace-pre-wrap text-lg leading-relaxed">
-                          {message}
-                        </p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                  <div className="mb-10">
+                <div className="bg-white/70 backdrop-blur-md border border-white/30 rounded-xl px-6 py-4 shadow-md text-center">
+                  <p className="text-lg font-medium leading-relaxed">
+                    {message}
+                  </p>
+                </div>
+              </div>
 
                 {/* Media */}
-                {media && media.length > 0 && (
-                  <div className="mb-8">
-                    <h2 className="text-xl font-heading font-semibold mb-4 flex items-center gap-2">
-                      <ImageIcon className="w-5 h-5 text-primary" />
-                      Media
-                    </h2>
-                    <div className="grid grid-cols-2 gap-4">
-                      {media.map((item: any, index: number) => (
-                        <div
-                          key={index}
-                          className="aspect-video rounded-2xl overflow-hidden shadow-card"
-                        >
-                          {item.type === "image" && (
-                            <img
-                              src={item.url}
-                              alt="Capsule media"
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                
+                {/* 📸 POLAROID MEDIA */}
+<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">
+  {[...images, ...videos].map((item: any, index: number) => (
+    <div
+      key={index}
+      className="bg-white p-3 rounded-lg shadow-xl w-[300px] hover:scale-105 transition backdrop-blur-xl border border-white/20"
+    >
+      {/* IMAGE */}
+      {item.type === "image" && (
+        <img
+          src={item.url}
+          className="w-full h-80 object-cover rounded"
+        />
+      )}
+
+      {/* VIDEO */}
+      {item.type === "video" && (
+        <video
+          src={item.url}
+          controls
+          className="w-full h-80 object-cover rounded"
+        />
+      )}
+
+      {/* CAPTION */}
+      {item.caption && (
+        <p
+          className="text-center mt-2 text-sm font-medium"
+          style={{ color: item.captionColor }}
+        >
+          {item.caption}
+        </p>
+      )}
+
+      {/* REACTION */}
+      {item.reaction && (
+        <div className="text-center text-xl mt-1">
+          {item.reaction}
+        </div>
+      )}
+    </div>
+  ))}
+</div>
+{/* 🎧 AUDIO SECTION */}
+{audios.length > 0 && (
+  <div className="mt-16">
+    <h2 className="text-2xl font-semibold mb-6 text-center">
+      🎧 Audio Memories
+    </h2>
+
+    <div className="max-w-3xl mx-auto space-y-4">
+      {audios.map((audio: any, index: number) => (
+        <div
+          key={index}
+          className="bg-white/80 backdrop-blur-lg p-4 rounded-xl shadow-md"
+        >
+          <audio controls className="w-full">
+            <source src={audio.url} />
+          </audio>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
               </motion.div>
             )}
 
@@ -217,21 +224,29 @@ const { toast } = useToast();
                 </p>
 
                 <div className="flex justify-center mb-8">
-                  <CountdownTimer unlockDate={new Date(unlockDate)} />
+                {safeUnlockDate && (
+  <CountdownTimer unlockDate={safeUnlockDate} />
+)}
                 </div>
 
                 <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <span className="text-sm">
-                    Unlocks on {format(new Date(unlockDate), "MMMM d, yyyy")}
+                    Unlocks on{" "}
+{safeUnlockDate
+  ? format(safeUnlockDate, "MMMM d, yyyy")
+  : "Loading..."}
                   </span>
                 </div>
               </CardContent>
             </Card>
           </div>
         )}
+        </div>
+        </div>
       </main>
     </div>
+
   );
 };
 
