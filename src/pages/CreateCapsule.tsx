@@ -49,57 +49,55 @@ const CreateCapsule = () => {
   setMediaFiles((prev) => prev.filter((_, i) => i !== index));
 };
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  e.preventDefault();
 
-    if (!unlockDate) return;
+  if (!unlockDate) return;
 
-    if (mediaFiles.length === 0) {
-      toast({
-        title: "Media required",
-        description: "Please upload at least one photo, video, or audio.",
-        variant: "destructive",
-      });
-      return;
-    }
+  if (mediaFiles.length === 0) {
+    toast({
+      title: "Media required",
+      description: "Please upload at least one photo, video, or audio.",
+      variant: "destructive",
+    });
+    return;
+  }
 
-    try {
-      setIsLoading(true);
+  try {
+    setIsLoading(true);
 
-      const formData = new FormData();
+    // Convert files → preview URLs
+    const mediaPreview = mediaFiles.map((file) => ({
+      url: URL.createObjectURL(file),
+      type: file.type.startsWith("image")
+        ? "image"
+        : file.type.startsWith("video")
+        ? "video"
+        : "audio",
+      file // keep original file for upload later
+    }));
 
-      formData.append("title", title);
-      formData.append("message", message);
-      formData.append("unlockDate", unlockDate.toISOString());
-
-      // Append multiple images (max 5)
-      mediaFiles.forEach((file) => {
-        formData.append("media", file);
-      });
-
-      await API.post("/capsules", formData);
-
-      toast({
-        title: "Capsule sealed! ✨",
-        description: `Your memory will unlock on ${format(unlockDate, "PPP")}`,
-      });
-
-      navigate("/dashboard");
-    } catch (error) {
-      console.error("Create capsule error:", error);
-
-      let errorMessage = "Something went wrong";
-
-      if (error instanceof AxiosError) {
-        errorMessage = error.response?.data?.message || errorMessage;
+    // 🚀 GO TO DESIGN PAGE (NO BACKEND CALL HERE)
+    navigate("/design", {
+      state: {
+        title,
+        message,
+        unlockDate,
+        media: mediaPreview
       }
+    });
 
-      toast({
-        title: "Failed to create capsule",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    }
-  };
+  } catch (error) {
+    console.error(error);
+
+    toast({
+      title: "Error",
+      description: "Something went wrong",
+      variant: "destructive",
+    });
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const isStep1Complete = title.length > 0;
   const isStep2Complete = message.length > 0 && mediaFiles.length > 0; 
