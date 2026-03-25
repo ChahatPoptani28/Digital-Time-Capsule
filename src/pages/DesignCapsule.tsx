@@ -293,27 +293,51 @@ const DesignCapsule = () => {
     setTextColor(imageCaptionColors[selectedMediaIndex] ?? "#111827");
   }, [selectedMediaIndex, imageCaptions, imageCaptionColors]);
 
-  const handleSave = async () => {
-    try {
-      await API.post("/capsules", {
-        title,
-        message,
-        unlockDate,
-        media: mediaList,
-        theme: themes[themeIndex].id,
-        // New: image-level captions + reactions (grid-only UI)
-        imageCaptions,
-        imageCaptionColors,
-        imageReactions,
-        // Keep stickers empty to avoid breaking the existing backend schema
-        stickers: [],
-      });
+ const handleSave = async () => {
+  try {
+    const formData = new FormData();
 
-      navigate("/dashboard");
-    } catch (err) {
-      console.log(err);
+    // basic fields
+    formData.append("title", title);
+    formData.append("message", message);
+    if (!unlockDate) {
+      alert("Unlock date missing");
+      return;
     }
-  };
+
+    const safeDate = new Date(unlockDate);
+    if (isNaN(safeDate.getTime())) {
+      alert("Invalid unlock date");
+      return;
+    }
+
+    formData.append("unlockDate", safeDate.toISOString());
+
+    // ✅ IMPORTANT: send actual files
+   mediaList
+  .filter((item) => item.type !== "audio")
+  .forEach((item) => {
+    formData.append("media", item.file);
+  });
+
+    // ✅ captions + reactions
+    formData.append("imageCaptions", JSON.stringify(imageCaptions));
+    formData.append("imageReactions", JSON.stringify(imageReactions));
+    formData.append("imageCaptionColors", JSON.stringify(imageCaptionColors));
+
+    // send request
+    console.log("MEDIA LIST:", mediaList);
+    await API.post("/capsules", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+
+    navigate("/dashboard");
+  } catch (err) {
+    console.log(err);
+  }
+};
 
   const onEmojiDragStart = (e: React.DragEvent, emoji: string) => {
     e.dataTransfer.setData(EMOJI_MIME, emoji);
