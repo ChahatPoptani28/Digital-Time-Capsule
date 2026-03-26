@@ -266,15 +266,13 @@ const DesignCapsule = () => {
 
     formData.append("unlockDate", safeDate.toISOString());
     formData.append("theme", themes[themeIndex].id);
-    formData.append("theme", selectedThemeId);
+   
     // ✅ IMPORTANT: send actual files
-  const validMedia = mediaList.filter((item) => {
-  if (!item.file) return false;
-
-  const type = item.file.type;
-
-  return type.startsWith("image/") || type.startsWith("video/");
-});
+ const validMedia = mediaList.filter((item) => item.file);
+ if (validMedia.length === 0) {
+  alert("Please upload at least one media file");
+  return;
+}
 
 // 🔥 ONLY VALID FILES
 validMedia.forEach((item) => {
@@ -353,7 +351,6 @@ validMedia.forEach((item) => {
 
   const userName = localStorage.getItem("userName")?.split(" ")[0];
   const theme = themes[themeIndex];
-  const selectedThemeId = theme.id;
   const isDarkFrame =
     theme.id === "midnight" ||
     theme.id === "midnight2" ||

@@ -90,7 +90,7 @@ const audios = (media || []).filter((m: any) => m.type === "audio");
       <main className="w-full px-6 py-10 flex justify-center">
         <div className="flex justify-center">
   <div
-  className={`w-full max-w-[1400px] lg:max-w-[1600px] xl:max-w-[1800px]
+  className={`w-full max-w-[1600px] lg:max-w-[1800px] xl:max-w-[2000px]
   rounded-[40px] shadow-2xl p-12 
   mx-auto ${selectedTheme?.class || ""}`}
 >
@@ -136,17 +136,19 @@ const audios = (media || []).filter((m: any) => m.type === "audio");
                 {/* Media */}
                 
                 {/* 📸 POLAROID MEDIA */}
-<div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-10 justify-items-center">
+<div className="flex flex-wrap justify-center gap-12">
   {[...images, ...videos].map((item: any, index: number) => (
+    
     <div
       key={index}
-      className="bg-white p-3 rounded-lg shadow-xl w-[300px] hover:scale-105 transition backdrop-blur-xl border border-white/20"
+      className="bg-white p-3 rounded-xl shadow-xl inline-block"
     >
+      
       {/* IMAGE */}
       {item.type === "image" && (
         <img
           src={item.url}
-          className="w-full h-80 object-cover rounded"
+          className="max-w-[500px] h-auto rounded"
         />
       )}
 
@@ -155,7 +157,7 @@ const audios = (media || []).filter((m: any) => m.type === "audio");
         <video
           src={item.url}
           controls
-          className="w-full h-80 object-cover rounded"
+          className="max-w-[500px] h-auto rounded"
         />
       )}
 
@@ -175,6 +177,7 @@ const audios = (media || []).filter((m: any) => m.type === "audio");
           {item.reaction}
         </div>
       )}
+
     </div>
   ))}
 </div>
