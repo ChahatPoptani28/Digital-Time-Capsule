@@ -19,7 +19,7 @@ const emojiPalette = [
 ];
 
 const stickerTextColors = [
-  "#ffffff", "#111827", "#e11d48", "#7c3aed", "#0ea5e9", "#22c55e", "#f97316", "#facc15",
+   "#111827", "#e11d48", "#7c3aed", "#0ea5e9", "#22c55e", "#f97316", "#facc15",
   "#ec4899", "#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#6366f1", "#14b8a6",
   "#d946ef", "#3b82f6", "#84cc16", "#f87171", "#a855f7", "#4f46e5", "#0d9488", "#ea580c",
 ];
@@ -79,6 +79,7 @@ const DesignCapsule = () => {
   const { title, message, media, unlockDate } = state || {};
   const mediaList = Array.isArray(media) ? media : [];
   const visualMedia = mediaList.filter((m: { type?: string }) => m.type !== "audio");
+  const [isSaving, setIsSaving] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -248,6 +249,7 @@ const DesignCapsule = () => {
 
  const handleSave = async () => {
   try {
+    setIsSaving(true)
     const formData = new FormData();
 
     // basic fields
@@ -259,12 +261,18 @@ const DesignCapsule = () => {
     }
 
     const safeDate = new Date(unlockDate);
-    if (isNaN(safeDate.getTime())) {
-      alert("Invalid unlock date");
-      return;
-    }
 
-    formData.append("unlockDate", safeDate.toISOString());
+if (isNaN(safeDate.getTime())) {
+  alert("Invalid unlock date");
+  return;
+}
+ const now = new Date();
+
+if (safeDate.toDateString() === now.toDateString()) {
+  safeDate.setTime(now.getTime() + 60 * 1000); // today → +1 min
+}
+
+formData.append("unlockDate", safeDate.toISOString());
     formData.append("theme", themes[themeIndex].id);
    
     // ✅ IMPORTANT: send actual files
@@ -292,10 +300,12 @@ validMedia.forEach((item) => {
         "Content-Type": "multipart/form-data",
       },
     });
-
+    
     navigate("/dashboard");
   } catch (err) {
     console.log(err);
+  } finally{
+    setIsSaving(false)
   }
 };
 
@@ -637,8 +647,13 @@ validMedia.forEach((item) => {
               .map((a: { url: string }, i: number) => <audio key={i} controls src={a.url} className="w-full" />)
           )}
 
-          <Button type="button" onClick={handleSave} className="mt-auto">
-            Save Capsule
+         <Button
+            type="button"
+            onClick={handleSave}
+            disabled={isSaving}
+            className="mt-auto"
+          >
+            {isSaving ? "Saving..." : "Save Capsule"}
           </Button>
         </aside>
       </div>
